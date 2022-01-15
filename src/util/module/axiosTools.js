@@ -3,9 +3,8 @@ import {exportStore} from "@/store"
 
 const store = exportStore()
 
-const baseURL = process.env.NODE_ENV === 'development' ? 'http://localhost:3101' : 'https://pan.zusheng.club'
-const proxyURL = process.env.NODE_ENV === 'development' ? 'http://localhost:3101/api' : 'https://zusheng.club/api'
-// const proxyURL = 'https://zusheng.club/api'
+const baseURL = 'http://localhost:3101'
+const proxyURL = 'http://localhost:3101/api'
 
 axios.defaults.baseURL = baseURL + '/api'
 axios.defaults.headers['X-Requested-With'] = 'XMLHttpRequest'
