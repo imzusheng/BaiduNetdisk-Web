@@ -1,8 +1,6 @@
 import {createRouter, createWebHistory} from 'vue-router'
-import {api} from "@/util";
-import {exportStore} from "@/store"
 
-const store = exportStore()
+import {store} from '@/util'
 
 const routes = [
   {
@@ -55,11 +53,7 @@ router.beforeEach((to, from, next) => {
     // 从url中提取路径
     const rawPath = to.query?.path ? decodeURIComponent(to.query.path.toString()) : '/'
     // 用路径获取文件列表
-    api.getFileList(rawPath).then(res => {
-      store.state.fileList.length = 0
-      Object.assign(store.state.fileList, res.list)
-      store.state.fileListLoading = false
-    })
+    store.dispatch('getFilesList', rawPath)
     // 处理路径，切割成数组并更新面包屑
     store.state.fileListBreadcrumb = rawPath.replace(/^\//g, '').split('/')
     // 面包屑首项始终是'全部文件'
@@ -76,7 +70,6 @@ router.beforeEach((to, from, next) => {
       name: 'HomeOverview',
       query: {path: pathEncode}
     })
-    // 并添加到路由参数
   } else {
     next()
   }

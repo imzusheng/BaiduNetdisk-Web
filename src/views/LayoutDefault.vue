@@ -34,22 +34,31 @@
           </span>
         </span>
       </div>
-      <!--  头像信息 e -->
+
+      <!--   搜索栏 s  -->
+      <div class="home-header-search">
+        <el-input
+            v-model="searchInput"
+            placeholder="搜索网盘文件"
+            class="input-with-select"
+            clearable
+        >
+          <template #prepend>
+            <el-select v-model="searchSelect" placeholder="搜索目录" style="width: 110px">
+              <el-option label="根目录" value="根目录"/>
+              <el-option label="当前目录" value="当前目录"/>
+            </el-select>
+          </template>
+          <template #append>
+            <el-button :icon="Search" @click="searchFiles"></el-button>
+          </template>
+        </el-input>
+      </div>
     </el-header>
 
     <el-container>
       <!--  侧边栏 s  -->
       <el-aside :class="'home-aside'">
-        <!--        <div class="home-aside-collapse">-->
-        <!--          <expand-->
-        <!--              v-if="menuCollapse"-->
-        <!--              @click="menuCollapse = !menuCollapse"-->
-        <!--              style="width: 1.5em; height: 1.5em; margin-right: 8px; color: #409eff; cursor: pointer"/>-->
-        <!--          <fold-->
-        <!--              v-else-->
-        <!--              @click="menuCollapse = !menuCollapse"-->
-        <!--              style="width: 1.5em; height: 1.5em; margin-right: 8px; color: #409eff; cursor: pointer"/>-->
-        <!--        </div>-->
         <!--  菜单 s -->
         <el-menu
             :default-active="$router.currentRoute.value.path.replace('/','')"
@@ -104,8 +113,8 @@
 </template>
 
 <script setup>
-import {computed, onMounted} from 'vue'
-import {House, Download, Odometer} from '@element-plus/icons-vue'
+import {computed, onMounted, ref} from 'vue'
+import {House, Download, Odometer, Search} from '@element-plus/icons-vue'
 import {useStore} from "vuex"
 import {ElLoading} from 'element-plus'
 import AuthPanel from '@/components/AuthPanel'
@@ -149,6 +158,19 @@ const downloadSum = computed(() => Object.keys(store.state.download).length)
 const localFilesSum = computed(() => store.state.listLocalFiles.length)
 // 配额，容量信息
 const quotaInfo = computed(() => store.state.quotaInfo)
+// 搜索内容
+const searchInput = ref('')
+// 搜索位置
+const searchSelect = ref('当前目录')
+// 搜索文件
+const searchFiles = () => {
+  if (searchInput.value) {
+    store.dispatch('getSearch', {
+      value: searchInput.value,
+      dir: searchSelect.value === '根目录' ? '/' : store.state.fileListBreadcrumb.join('/').replaceAll('全部文件', '')
+    })
+  }
+}
 
 // 退出登录
 const logout = () => {
@@ -195,6 +217,13 @@ const logout = () => {
         margin-left: 4px;
         color: #999;
       }
+    }
+
+    // 搜索栏
+    .home-header-search {
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
   }
 

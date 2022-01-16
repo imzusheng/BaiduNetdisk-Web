@@ -1,10 +1,20 @@
-import config from "@/util/module/config";
-import * as api from "@/util/module/api"
+import config from "@/util/module/config"
 import * as util from "@/util/module/util"
+import AxiosTools from "@/util/module/axiosTools"
+import Api from '@/util/module/api'
 
-// 引入时简洁点
+let axiosTools, api, store
+
+export function init(storeArgs) {
+  store = storeArgs
+  axiosTools = new AxiosTools(store)
+  api = new Api(store)
+}
+
 export {
   api,
+  util,
+  store,
   config,
-  util
+  axiosTools
 }

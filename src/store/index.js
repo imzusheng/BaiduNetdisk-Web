@@ -1,9 +1,10 @@
 import {createStore} from 'vuex'
-import {api, config} from "@/util";
+import {api, config, init} from "@/util";
 import {ElMessage} from "element-plus"
 import WsServer from 'quick-ws-server'
+import router from "@/router";
 
-const store = createStore({
+export const store = createStore({
   state: {
     ws: new WsServer({
       url: 'ws://localhost:3102',
@@ -41,7 +42,7 @@ const store = createStore({
       state.auth = payLoad.result
       state.authJsonPath = payLoad.filePath
       Object.assign(config, payLoad.result)
-      Object.freeze(config)
+      // Object.freeze(config)
     },
     // access_token
     setAccessToken(state, payLoad) {
@@ -136,6 +137,7 @@ const store = createStore({
         })
       })
     },
+    // 删除下载我呢见
     deleteDownload(context, payload) {
       return new Promise(resolve => {
         api.deleteDownload(payload).then(res => {
@@ -147,20 +149,34 @@ const store = createStore({
         })
       })
     },
-    getFilesList({commit}, payload) {
-      api.getFileList(payload).then(res => {
+    // 获取文件列表
+    getFilesList({state, commit}, payload) {
+      const path = payload || state.fileListBreadcrumb.join('/').replaceAll('全部文件', '')
+      api.getFileList(path).then(res => {
         commit('setFilesList', res)
       })
     },
+    // 退出登录
     logout() {
       return new Promise(resolve => {
         api.logout().then(() => resolve())
+      })
+    },
+    // 搜索文件
+    getSearch({commit, state}, payload) {
+      state.fileListLoading = true
+      router.push({
+        query: {
+          path: router.currentRoute.value.query?.path || null,
+          type: 'search'
+        }
+      })
+      api.getSearch(payload).then(res => {
+        commit('setFilesList', res)
       })
     }
   },
   modules: {}
 })
 
-export default store
-
-export const exportStore = () => store
+init(store)

@@ -19,10 +19,11 @@
 
     <!-- 文件列表 s -->
     <el-table
+        :data="tableData"
         :class="'home-main-table'"
         ref="multipleTableRef"
-        :data="tableData"
         style="width: 100%"
+        :default-sort="{ prop: 'isdir', order: 'descending' }"
         @selection-change="handleSelectionChange"
         @row-click="rowClick"
         empty-text="空目录"
@@ -58,9 +59,9 @@
         <template #default="scope">
           <el-skeleton :rows="0" animated v-if="tableLoading"/>
           <span v-else>
-                {{ scope.row.isdir === 1 ? '目录' : '' }}
-                <span v-if="scope.row.isdir !== 1">{{ util.getFileExt(scope.row.server_filename) }}</span>
-              </span>
+            {{ scope.row.isdir === 1 ? '目录' : '' }}
+            <span v-if="scope.row.isdir !== 1">{{ util.getFileExt(scope.row.server_filename) }}</span>
+          </span>
         </template>
       </el-table-column>
       <!-- 大小 s -->
@@ -125,7 +126,7 @@ const rowClick = e => {
   if (isDir === 1) {
     clearData()
     // 加载状态
-    tableLoading.value = true
+    store.state.fileListLoading = true
     router.push({
       query: {
         path: encodeURIComponent(rowData.path)
@@ -165,7 +166,7 @@ const updateBreadcrumb = index => {
         path: encodeURIComponent(`${store.state.fileListBreadcrumb.slice(0, store.state.fileListBreadcrumb.length - 1).join('/').replace('全部文件', '')}`) || '/'
       }
     })
-  } else if (breadcrumb.value.length !== (index + 1) && breadcrumb.value.length !== 1) { // 确保不是自己点自己，以及不是在根目录点击根目录的状态下
+  } else { // 确保不是自己点自己，以及不是在根目录点击根目录的状态下
     router.push({
       query: {
         path: encodeURIComponent(`${breadcrumb.value.slice(0, index + 1).join('/').replace('全部文件', '')}`) || '/'
@@ -221,6 +222,8 @@ onMounted(() => {
 
         .el-table__inner-wrapper {
           height: 100%;
+          display: flex;
+          flex-direction: column;
 
           .el-table__body-wrapper {
             height: 100%;
