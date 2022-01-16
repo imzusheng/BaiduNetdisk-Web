@@ -97,8 +97,8 @@ const onSubmit = formRef => {
       .validate()
       .then(validate => {
         if (validate) {
-          const {Code} = toRaw(formData)
-          store.dispatch('postAccessToken', Code).then(res => {
+          const {AppKey, SecretKey, Code} = toRaw(formData)
+          store.dispatch('postAccessToken', {AppKey, SecretKey, Code}).then(res => {
             if (res.error) {
               CodeRef.value.resetField()
               ElMessage.error({

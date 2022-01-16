@@ -52,12 +52,12 @@ export const getAuth = () => {
 }
 
 // 获取access_token
-export const postAccessToken = code => {
+export const postAccessToken = params => {
   return new Promise(resolve => {
-    apiService.post('/accessToken', {
-      code,
-      cross: true
-    }).then(res => resolve(res))
+    apiService.post(
+        '/accessToken',
+        Object.assign(params, {cross: true})
+    ).then(res => resolve(res))
   })
 }
 

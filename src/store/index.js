@@ -95,9 +95,9 @@ const store = createStore({
       })
     },
     // 获取accessToken
-    postAccessToken({commit}, code) {
+    postAccessToken({commit}, payload) {
       return new Promise(resolve => {
-        api.postAccessToken(code).then(res => {
+        api.postAccessToken(payload).then(res => {
           commit('setAccessToken', res)
           resolve(res)
         })

@@ -25,12 +25,16 @@ routerApi.post('/accessToken', async (req, res) => {
   }
   delete require.cache[require('../auth.json')]
   const auth = require('../auth.json')
-  const {code} = req.body
-  const url = `https://openapi.baidu.com/oauth/2.0/token?grant_type=authorization_code&code=${code}&client_id=${auth.AppKey}&client_secret=${auth.SecretKey}&redirect_uri=${auth.redirect_uri}`
+  const {AppKey, SecretKey, Code} = req.body
+  const url = `https://openapi.baidu.com/oauth/2.0/token?grant_type=authorization_code&code=${Code}&client_id=${AppKey}&client_secret=${SecretKey}&redirect_uri=${auth.redirect_uri}`
   const accessTokenResult = await getAccessToken()
   if (!accessTokenResult?.error) {
     postResult.error = false
     await writeJson(accessTokenResult)
+  } else {
+    await writeJson({
+      AppKey, SecretKey, Code
+    })
   }
   postResult.msg = accessTokenResult
   
@@ -76,6 +80,7 @@ routerApi.post('/accessToken', async (req, res) => {
       })
     })
   }
+  
   res.setHeader('Last-Modified', (new Date).toUTCString()) // 防止缓存
   res.send(postResult)
 })
