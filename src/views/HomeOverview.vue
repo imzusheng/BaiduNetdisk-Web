@@ -87,13 +87,13 @@
 
 <script setup>
 
+import {useStore} from 'vuex'
 import {api, util} from '@/util'
+import {useRouter} from 'vue-router'
 import {computed, onMounted, reactive, toRaw} from 'vue'
 import {Share, Download, Delete} from '@element-plus/icons-vue'
-import {useStore} from 'vuex'
-import {useRouter} from 'vue-router'
-import {ElMessage, ElMessageBox} from 'element-plus'
-
+import {ElLoading, ElMessage, ElMessageBox} from 'element-plus'
+import resJson from '@/assets/json/res.json'
 
 const store = useStore()
 const router = useRouter()
@@ -118,14 +118,12 @@ const breadcrumb = computed(() => {
 })
 // 多选数据
 const rowSelection = reactive([])
-
 // 多选回调
 const handleSelectionChange = e => {
   const rawData = e.map(v => toRaw(v))
   rowSelection.length = 0
   rowSelection.push(...rawData)
 }
-
 // 分享
 const toolsShare = () => ElMessage.warning('暂未开放分享功能')
 // 删除文件
@@ -154,9 +152,70 @@ const toolsDelete = () => {
       })
 }
 // 批量下载
-const toolsDownload = () => {
+const toolsDownload = async () => {
+  // 全屏加载动画
+  const loadingInstance = ElLoading.service({
+    fullscreen: true,
+    text: '正在整理文件信息...'
+  })
   const rawData = toRaw(rowSelection)
-  console.log(rawData)
+  const isDir = []       // 选中的文件夹
+  const isDirPath = []   // 选中文件夹的路径
+  const notDir = []      // 选中的非文件夹
+  rawData.forEach(v => {
+    if (v.isdir === 1) { // 1为文件夹
+      isDir.push(v)
+      isDirPath.push(v.path)
+    } else {             // 0为文件
+      notDir.push(v)
+    }
+  })
+  const taskList = isDirPath.map(path => { // 创建Promise队列的参数
+    // 递归所有文件夹中的子文件并获取文件信息
+    const cb = () => store.dispatch('getMultiFileList', path)
+    // cb是需要执行的任务, index是任务的标记 正常来说是按顺序执行
+    return {
+      cb,
+      index: path
+    }
+  })
+  const promiseQueue = new util.PromiseQueue(taskList, 100)
+  promiseQueue.getResult().then(res => {
+    loadingInstance.close() // 关闭全屏动画
+    const sum = Object.values(res).reduce((a, b) => a?.cursor ? a.cursor + b.cursor : a + b.cursor, 0) // 总文件数量
+    ElMessageBox.confirm(
+        `确定要下载这${sum}个文件或文件夹吗?`,
+        '提示',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+        })
+        .then(() => {
+          // 收集fsids准备下载
+          const files = []
+          // 将不同请求的结果合并成一个数组，保存在files[]
+          Object.values(res).forEach(v => {
+            if (v?.list) files.push(...v?.list)
+          })
+          // 将结果中的fsid提取出来
+          const fsids = files.map(v => v.fs_id)
+          download(fsids)
+        })
+        .catch(() => {
+          console.log('关闭')
+        })
+  })
+}
+
+console.log(resJson)
+
+store.dispatch('postRecordTasks', resJson.list)
+
+function download(fsids) {
+  store.dispatch('getFileMeta', fsids).then(res => {
+    console.log(res)
+  })
 }
 
 // 清空响应式数据
@@ -229,6 +288,7 @@ const updateBreadcrumb = index => {
 onMounted(() => {
   store.commit('setBreadcrumb')
 })
+
 </script>
 
 <style lang="less">

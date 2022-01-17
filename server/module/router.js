@@ -146,12 +146,15 @@ routerApi.get('/deleteDownload', async (req, res) => {
 // proxy https版本
 routerApi.get('/proxy', async (req, res) => {
   const {method = 'get'} = req.query
+  
   let result
+  
   if (method === 'get') {
     result = await get(req)
   } else if (method === 'post') {
     result = await fileManagerPost(req)
   }
+  
   res.send(result)
 })
 

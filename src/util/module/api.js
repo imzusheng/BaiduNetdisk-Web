@@ -7,6 +7,7 @@ import {computed} from "vue"
 let store, state, ws, accessToken
 
 export default class API {
+  
   constructor(storeArgs) {
     if (storeArgs) {
       store = storeArgs
@@ -130,12 +131,23 @@ export default class API {
   }
   
   // 递归获取文件列表
-  getMultiFileList = () => {
+  getMultiFileList = path => {
     return new Promise(resolve => {
-      const url = `https://pan.baidu.com/rest/2.0/xpan/multimedia?method=listall&path=/&web=1&recursion=1&start=0&limit=5&access_token=${accessToken.value}`
+      const url = `https://pan.baidu.com/rest/2.0/xpan/multimedia`
       if (!config.is_electron) {
         axiosTools.proxy('/proxy', {
-          params: {url}
+          params: {
+            url: decodeURIComponent(url),
+            params: {
+              path,
+              web: 1,
+              method: 'listall',
+              recursion: 1,
+              start: 0,
+              limit: 1000,
+              'access_token': accessToken.value
+            }
+          }
         }).then(res => resolve(res))
       } else {
         // electron环境时允许跨域，不需要代理
@@ -173,25 +185,6 @@ export default class API {
   
   // 代理下载
   getDownload = (dlink, filename, fsid) => {
-    // 如果需要直接前端获取文件
-    // const data = []
-    // ws.on('message', res => {
-    //   data.push(res.data)
-    //   // !(res.data instanceof ArrayBuffer)
-    //   if (typeof res.data === 'string') {
-    //     const toJson = JSON.parse(res.data)
-    //     const contentType = toJson.headers['content-type']
-    //     const disposition = decodeURI(toJson.headers['content-disposition'])
-    //     const filename = disposition.substring(disposition.indexOf('filename=') + 'filename='.length).replace('"', '').replace('+', ' ')
-    //     const blob = new Blob([...data], {type: contentType})
-    //     const url = URL.createObjectURL(blob)
-    //     const aEl = document.createElement('a')
-    //     aEl.href = url
-    //     aEl.download = filename
-    //     aEl.click()
-    //   }
-    // })
-    
     // 发送dlink到服务器开始下载
     ws.sendMsg({
       type: 'download',
@@ -338,6 +331,17 @@ export default class API {
       //   }],
       //   delete: ["/测试目录/123456.docx"]
       // })
+    })
+  }
+  
+  // 记录下载任务
+  postRecordTasks = list => {
+    return new Promise(resolve => {
+      axiosTools.proxy('/recordTasks', {
+        params: {
+          list
+        }
+      }).then(res => resolve(res))
     })
   }
   

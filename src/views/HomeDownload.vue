@@ -76,11 +76,12 @@ const itemClick = itemData => {
   // 存在fsid说明是暂停状态
   if (rawData?.status === 'pause') {  // 当前状态是暂停，则重新连接
     data.value[rawData.fsid].connect = '正在重新连接...'
-    api.getFileMeta([rawData.fsid]).then(res => {
-      data.value[rawData.fsid].connect = '正在获取资源...'
-      const fileMeta = res.list[0]
-      api.getDownload(fileMeta.dlink, fileMeta.filename, rawData.fsid)
-    })
+    store.dispatch('getFileMeta', [rawData.fsid])
+        .then(res => {
+          data.value[rawData.fsid].connect = '正在获取资源...'
+          const fileMeta = res.list[0]
+          api.getDownload(fileMeta.dlink, fileMeta.filename, rawData.fsid)
+        })
   } else if (rawData?.status === 'run') {  // 当前状态是下载中，则暂停任务
     api.closeWebsocket(rawData)
   }

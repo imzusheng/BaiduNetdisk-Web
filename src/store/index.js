@@ -158,9 +158,7 @@ export const store = createStore({
     },
     // 退出登录
     logout() {
-      return new Promise(resolve => {
-        api.logout().then(() => resolve())
-      })
+      return api.logout()
     },
     // 搜索文件
     getSearch({commit, state}, payload) {
@@ -177,11 +175,20 @@ export const store = createStore({
     },
     // 文件管理
     postFileManager(context, payload) {
-      return new Promise(resolve => {
-        api.postFileManager(payload).then(res => resolve(res))
-      })
+      return api.postFileManager(payload)
     },
-    
+    // 递归文件夹信息
+    getMultiFileList(context, payload) {
+      return api.getMultiFileList(payload)
+    },
+    // 获取文件信息，dlink等
+    getFileMeta(context, payload) {
+      return api.getFileMeta(payload)
+    },
+    // 记录下载任务到json
+    postRecordTasks(context, payload) {
+      return api.postRecordTasks(payload)
+    }
   },
   modules: {}
 })

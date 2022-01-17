@@ -4,6 +4,7 @@
 -->
 
 <template>
+
   <AuthPanel :dialogVisible="false"/>
 
   <el-container :id="'HomeOverview'">
@@ -57,6 +58,7 @@
     </el-header>
 
     <el-container>
+
       <!--  侧边栏 s  -->
       <el-aside :class="'home-aside'">
         <!--  菜单 s -->
@@ -106,9 +108,11 @@
           <component :is="Component"/>
         </keep-alive>
       </router-view>
+
     </el-container>
 
   </el-container>
+
 </template>
 
 <script setup>
