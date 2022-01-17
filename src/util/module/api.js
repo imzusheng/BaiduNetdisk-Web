@@ -8,11 +8,13 @@ let store, state, ws, accessToken
 
 export default class API {
   constructor(storeArgs) {
-    store = storeArgs
-    state = store.state
-    ws = state.ws
-    accessToken = computed(() => store.state.auth.access_token)
-    this.listenWs()
+    if (storeArgs) {
+      store = storeArgs
+      state = store.state
+      ws = state.ws
+      accessToken = computed(() => store.state.auth.access_token)
+      this.listenWs()
+    }
   }
   
   // 监听websocket收到的消息
@@ -278,6 +280,7 @@ export default class API {
     })
   }
   
+  // 搜索
   getSearch = ({value: key, dir = '/'}) => {
     return new Promise(resolve => {
       axiosTools.proxy('/proxy', {
@@ -291,12 +294,50 @@ export default class API {
             dir,
             num: 100,
             recursion: 1,
-            page: 1,
+            page: 2,
+            order: 'time',
+            desc: 1,
             web: 1,
             'access_token': accessToken.value
           }
         }
       }).then(res => resolve(res))
+    })
+  }
+  
+  // 管理文件
+  postFileManager = ({opera, filelist}) => {
+    return new Promise(resolve => {
+      axiosTools.proxy('/proxy', {
+        params: {
+          url: encodeURI(`https://pan.baidu.com/rest/2.0/xpan/file?method=filemanager&opera=${opera}&access_token=${accessToken.value}`),
+          method: 'post',
+          params: {
+            filelist,
+            async: 0
+          }
+        }
+      }).then(res => resolve(res))
+      // filelist 参考
+      // console.log({
+      //   copy: [{
+      //     path: "/测试目录/123456.docx",
+      //     dest: "/测试目录/abc",
+      //     newname: "11223.docx",
+      //     ondup: "fail"
+      //   }],
+      //   move: [{
+      //     path: "/测试目录/123456.docx",
+      //     dest: "/测试目录/abc",
+      //     newname: "11223.docx",
+      //     ondup: "fail"
+      //   }],
+      //   rename: [{
+      //     path: "/测试目录/123456.docx",
+      //     newname: "test.docx"
+      //   }],
+      //   delete: ["/测试目录/123456.docx"]
+      // })
     })
   }
   

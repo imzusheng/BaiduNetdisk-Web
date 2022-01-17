@@ -7,6 +7,19 @@
   <!-- 主内容 s  -->
   <el-main>
     <div class="home-main-tools">
+      <!--  功能按钮 s  -->
+      <div class="home-main-btn">
+        <el-button-group>
+          <el-button type="primary" :icon="Share" round><b>上传</b></el-button>
+          <el-button type="primary" :icon="Share" plain round><b>新建文件夹</b></el-button>
+        </el-button-group>
+        <el-button-group v-if="rowSelection.length > 0" style="margin-left: 12px">
+          <el-button type="primary" :icon="Share" plain round @click="toolsShare"><b>分享</b></el-button>
+          <el-button type="primary" :icon="Download" plain round @click="toolsDownload"><b>下载</b></el-button>
+          <el-button type="primary" :icon="Delete" color="rgba(254, 46, 57, .75)" round @click="toolsDelete"><b>删除</b>
+          </el-button>
+        </el-button-group>
+      </div>
       <!--   面包屑 s     -->
       <el-breadcrumb separator="/" :class="'home-main-breadcrumb'" :id="'homeBreadcrumb'">
         <el-breadcrumb-item v-for="(item, key) in breadcrumb" :key="key" @click="updateBreadcrumb(key)">
@@ -23,7 +36,6 @@
         :class="'home-main-table'"
         ref="multipleTableRef"
         style="width: 100%"
-        :default-sort="{ prop: 'isdir', order: 'descending' }"
         @selection-change="handleSelectionChange"
         @row-click="rowClick"
         empty-text="空目录"
@@ -76,10 +88,11 @@
 <script setup>
 
 import {api, util} from '@/util'
-import {computed, onMounted, toRaw} from 'vue'
+import {computed, onMounted, reactive, toRaw} from 'vue'
+import {Share, Download, Delete} from '@element-plus/icons-vue'
 import {useStore} from 'vuex'
 import {useRouter} from 'vue-router'
-import {ElMessage} from 'element-plus'
+import {ElMessage, ElMessageBox} from 'element-plus'
 
 
 const store = useStore()
@@ -103,9 +116,46 @@ const breadcrumb = computed(() => {
     return store.state.fileListBreadcrumb
   }
 })
+// 多选数据
+const rowSelection = reactive([])
 
+// 多选回调
 const handleSelectionChange = e => {
   const rawData = e.map(v => toRaw(v))
+  rowSelection.length = 0
+  rowSelection.push(...rawData)
+}
+
+// 分享
+const toolsShare = () => ElMessage.warning('暂未开放分享功能')
+// 删除文件
+const toolsDelete = () => {
+  const rawData = toRaw(rowSelection)
+  ElMessageBox.confirm(
+      `确定要删除这${rawData.length}个文件或文件夹吗?`,
+      '提示',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      })
+      .then(() => {
+        store.dispatch('postFileManager', {
+          opera: 'delete',
+          filelist: rawData.map(v => v.path)
+        }).then(res => {
+          if (res.error) {
+            ElMessage.error('删除失败')
+          } else {
+            ElMessage.success('删除成功')
+          }
+          store.dispatch('getFilesList')
+        })
+      })
+}
+// 批量下载
+const toolsDownload = () => {
+  const rawData = toRaw(rowSelection)
   console.log(rawData)
 }
 
@@ -196,11 +246,15 @@ onMounted(() => {
 
       .home-main-tools {
         width: 100%;
-        display: flex;
+
+        // 功能按钮
+        .el-button-group {
+          margin-bottom: 10px;
+        }
 
         // 面包屑
         .home-main-breadcrumb {
-          padding: 12px 12px 0;
+          padding: 8px 12px 0;
 
           .el-breadcrumb__item {
             margin-bottom: 12px;

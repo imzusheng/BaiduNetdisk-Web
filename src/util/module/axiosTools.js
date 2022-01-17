@@ -2,36 +2,38 @@ import axios from 'axios'
 
 export default class axiosTools {
   constructor(store) {
-    this.baseURL = 'http://localhost:3101'
-    this.proxyURL = 'http://localhost:3101/api'
-    
-    axios.defaults.baseURL = this.baseURL + '/api'
-    axios.defaults.headers['X-Requested-With'] = 'XMLHttpRequest'
-    axios.defaults.headers.post['Content-Type'] = 'application/json'
-    
-    const CancelToken = axios.CancelToken
-    const source = CancelToken.source()
-
-    // 请求拦截
-    axios.interceptors.request.use(config => {
-      // config.headers.Authorization = localStorage.getItem('token')
-      config.headers.UserUk = JSON.stringify(store.state.userInfo?.uk)
-      // 没有access_token,也没有cross标记(我自己加的),就拦截
-      if (!store.state.auth['access_token'] && !config?.params?.cross && !config?.data?.cross) {
-        config.cancelToken = source.token
-        source.cancel('access_token缺失,请登录')
-      }
-      return config
-    })
-
-    // 响应拦截器
-    axios.interceptors.response.use(async response => {
-      // ...
-      return response?.data ?? response
-    }, error => {
-      // return Promise.resolve(error) // 不想看见错误可以这么做
-      return Promise.reject(error)
-    })
+    if (store){
+      this.baseURL = 'http://localhost:3101'
+      this.proxyURL = 'http://localhost:3101/api'
+  
+      axios.defaults.baseURL = this.baseURL + '/api'
+      axios.defaults.headers['X-Requested-With'] = 'XMLHttpRequest'
+      axios.defaults.headers.post['Content-Type'] = 'application/json'
+  
+      const CancelToken = axios.CancelToken
+      const source = CancelToken.source()
+  
+      // 请求拦截
+      axios.interceptors.request.use(config => {
+        // config.headers.Authorization = localStorage.getItem('token')
+        config.headers.UserUk = JSON.stringify(store.state.userInfo?.uk)
+        // 没有access_token,也没有cross标记(我自己加的),就拦截
+        if (!store.state.auth['access_token'] && !config?.params?.cross && !config?.data?.cross) {
+          config.cancelToken = source.token
+          source.cancel('由于access_token缺失,请求已拦截.错误可忽略')
+        }
+        return config
+      })
+  
+      // 响应拦截器
+      axios.interceptors.response.use(async response => {
+        // ...
+        return response?.data ?? response
+      }, error => {
+        // return Promise.resolve(error) // 不想看见错误可以这么做
+        return Promise.reject(error)
+      })
+    }
   }
   
   /**
@@ -60,35 +62,6 @@ export default class axiosTools {
       data: params
     }
     return axios(Object.assign(baseOpt, opt))
-  }
-  
-  put(url, params, opt) {
-    const baseOpt = {
-      method: 'put',
-      url,
-      data: params
-    }
-    return axios(Object.assign(baseOpt, opt))
-  }
-  
-  delete(url, params, opt) {
-    const baseOpt = {
-      method: 'delete',
-      url,
-      data: params
-    }
-    return axios(Object.assign(baseOpt, opt))
-  }
-  
-  // 上传, cb返回上传进度
-  upload(url, params, cb) {
-    return axios({
-      method: 'post',
-      data: params,
-      url,
-      headers: {'Content-type': 'multipart/form-data;'},
-      onUploadProgress: progress => cb ? cb(progress) : null
-    })
   }
   
   /**

@@ -4,6 +4,14 @@ const path = require("path");
 const querystring = require("querystring")
 const https = require("https")
 const fs = require("fs")
+const axios = require('axios')
+
+axios.defaults.headers['X-Requested-With'] = 'XMLHttpRequest'
+// 请求拦截
+axios.interceptors.request.use(config => {
+  // console.log(config)
+  return config
+})
 
 const routerApi = express.Router()
 
@@ -137,7 +145,13 @@ routerApi.get('/deleteDownload', async (req, res) => {
 
 // proxy https版本
 routerApi.get('/proxy', async (req, res) => {
-  const result = await get(req)
+  const {method = 'get'} = req.query
+  let result
+  if (method === 'get') {
+    result = await get(req)
+  } else if (method === 'post') {
+    result = await fileManagerPost(req)
+  }
   res.send(result)
 })
 
@@ -176,4 +190,57 @@ function get(req) {
   })
 }
 
+// 文件操作专属方法
+function fileManagerPost(req) {
+  return new Promise(resolve => {
+    const {
+      url,
+      params,
+      headers = {
+        "User-Agent": "pan.baidu.com",
+        "content-type": "application/x-www-form-urlencoded" // json不行
+      }
+    } = req.query
+    
+    const {filelist, async = 0} = JSON.parse(params)
+    
+    let filelistStr = ''
+    
+    filelist.forEach((v, k) => {
+      filelistStr += `${k === 0 ? '' : ','}"${v}"`
+    })
+    
+    // 未编码前
+    // console.log({filelist: `[${filelistStr}]`, async})
+    
+    axios
+        .post(url, querystring.stringify({
+          filelist: `[${filelistStr}]`,
+          async
+        }), {headers})
+        .then(({data}) => {
+          if (data.errno === 0) {
+            resolve({
+              error: false,
+              info: data.info
+            })
+          } else {
+            resolve({
+              error: true,
+              info: data
+            })
+          }
+        })
+        .catch(res => {
+          resolve({
+            error: true,
+            info: res
+          })
+        })
+    
+  })
+}
+
 module.exports = routerApi
+
+

@@ -3,7 +3,9 @@ import * as util from "@/util/module/util"
 import AxiosTools from "@/util/module/axiosTools"
 import Api from '@/util/module/api'
 
-let axiosTools, api, store
+let axiosTools = new AxiosTools(null),
+    api = new Api(null),
+    store
 
 export function init(storeArgs) {
   store = storeArgs
@@ -11,6 +13,7 @@ export function init(storeArgs) {
   api = new Api(store)
 }
 
+// es module导出的时引用,因此init前store为undefined,执行后为store
 export {
   api,
   util,

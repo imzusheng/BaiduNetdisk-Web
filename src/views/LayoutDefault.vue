@@ -74,8 +74,7 @@
             </span>
           </el-menu-item>
           <el-menu-item index="download" @click="$router.replace('/download')">
-            <odometer
-                style="width: 16px; height: 16px; cursor: pointer"/>
+            <odometer style="width: 16px; height: 16px; cursor: pointer"/>
             <span style="width: 8px"></span>
             <el-badge :value="downloadSum" :max="10" v-if="downloadSum >0">
               <span>下载任务</span>
@@ -224,6 +223,28 @@ const logout = () => {
       display: flex;
       justify-content: center;
       align-items: center;
+
+      .el-input-group__append {
+        background: rgba(64, 158, 255, 1);
+
+        .el-button {
+          margin-top: -3px;
+
+          svg, i {
+            color: #fff;
+          }
+        }
+      }
+
+      > .el-input {
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid #dcdfe6;
+
+        div, .el-input__inner {
+          border: none;
+        }
+      }
     }
   }
 

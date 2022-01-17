@@ -61,10 +61,10 @@ export const store = createStore({
       state.download[payload.fsid].status = payload.status
     },
     // 更新面包屑是否超出宽度
-    setBreadcrumb(state) {
-      let homeTools = window.document.querySelector('.home-main-tools')
-      let homeBreadcrumb = window.document.querySelector('#homeBreadcrumb')
-      state.breadcrumbExceed = (homeTools && homeBreadcrumb && homeBreadcrumb.clientWidth / homeTools.clientWidth > 1) || false
+    setBreadcrumb() {
+      // let homeTools = window.document.querySelector('.home-main-tools')
+      // let homeBreadcrumb = window.document.querySelector('#homeBreadcrumb')
+      // state.breadcrumbExceed = (homeTools && homeBreadcrumb && homeBreadcrumb.clientWidth / homeTools.clientWidth > 1) || false
     },
     // 更改已下载的页面数据
     setLocalFiles(state, payload) {
@@ -174,7 +174,14 @@ export const store = createStore({
       api.getSearch(payload).then(res => {
         commit('setFilesList', res)
       })
-    }
+    },
+    // 文件管理
+    postFileManager(context, payload) {
+      return new Promise(resolve => {
+        api.postFileManager(payload).then(res => resolve(res))
+      })
+    },
+    
   },
   modules: {}
 })

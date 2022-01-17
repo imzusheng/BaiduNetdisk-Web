@@ -3,7 +3,7 @@ const cors = require('cors')
 const bodyParser = require('body-parser')
 const routerApi = require('./module/router')
 
-require('./module/ws') // 导入ws代码
+require('./module/ws') // 导入ws代码\\
 
 express()
     .use(cors()) // 允许跨域
