@@ -1,4 +1,6 @@
 // string 转 blob
+import path from "path"
+
 export const stringToBlob = (str, MIME) => {
   return new Blob([str], {
     type: MIME
@@ -198,6 +200,32 @@ export class PromiseQueue {
               })
         }, this.time)
       })
+    }
+  }
+}
+
+/**
+ * 转换文件名, 写入的文件名加入了_fsid_需要去除
+ * @param filename 文件名
+ * @param fsid 文件ID
+ * @param type input为写入，加入fsid/ output为读取，去除fsid
+ */
+export const filenameHandle = (filename, fsid, type) => {
+  // 取文件后缀名
+  const fileExt = path.extname(filename)
+  if (type === 'input') {
+    return filename.replace(new RegExp(`${fileExt}$`), `_fsid_${fsid + '' + fileExt}`)
+  } else if (type === 'output') {
+    // 取fsid， 处理后格式_fsid_123456
+    const fsidExt = filename.substring(filename.lastIndexOf('_fsid_'), filename.lastIndexOf(fileExt))
+    // 源文件名，只要替换掉_fsid_123456部分
+    const rawFilename = filename.replace(fsidExt, '')
+    // fsid，去除字符串"_fsid_"
+    const fsid = fsidExt.replace('_fsid_', '')
+    return {
+      filename: rawFilename,
+      fsid,
+      fileExt
     }
   }
 }

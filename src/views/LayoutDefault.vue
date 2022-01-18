@@ -78,7 +78,7 @@
           <el-menu-item index="download" @click="$router.replace('/download')">
             <odometer style="width: 16px; height: 16px; cursor: pointer"/>
             <span style="width: 8px"></span>
-            <el-badge :value="downloadSum" :max="10" v-if="downloadSum >0">
+            <el-badge :value="downloadSum" :max="999" v-if="downloadSum >0">
               <span>下载任务</span>
             </el-badge>
             <span v-else>下载中</span>
@@ -134,17 +134,17 @@ onMounted(() => {
     text: '正在登录'
   })
 
-  // 第一步 获取权限(token)
+  // 第一步 获取权限(access_token)
   store.dispatch('getAuth').then(() => {
     if (store.state.auth['access_token']) {
-      // 第二步 获取用户信息(uk)
+      // 第二步 获取用户信息(需要uk)
       // api需要获取用户唯一标识uk之后才能使用
       store.dispatch('getUserInfo').then(() => {
         loadingInstance.close() // 关闭加载动画
         store.dispatch('getUndoneList') // 获取未下载完成的任务列表
         store.dispatch('getLocalFiles') // 获取本地已下载的文件信息
       })
-      // 不需要uk但需要access_token
+      // (不需要uk)但需要access_token
       store.dispatch('getQuotaInfo') // 获取配额，容量信息
       store.dispatch('getFilesList') // 获取文件列表
     } else {

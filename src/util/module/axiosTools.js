@@ -2,17 +2,17 @@ import axios from 'axios'
 
 export default class axiosTools {
   constructor(store) {
-    if (store){
+    if (store) {
       this.baseURL = 'http://localhost:3101'
       this.proxyURL = 'http://localhost:3101/api'
-  
+      
       axios.defaults.baseURL = this.baseURL + '/api'
       axios.defaults.headers['X-Requested-With'] = 'XMLHttpRequest'
       axios.defaults.headers.post['Content-Type'] = 'application/json'
-  
+      
       const CancelToken = axios.CancelToken
       const source = CancelToken.source()
-  
+      
       // 请求拦截
       axios.interceptors.request.use(config => {
         // config.headers.Authorization = localStorage.getItem('token')
@@ -24,7 +24,7 @@ export default class axiosTools {
         }
         return config
       })
-  
+      
       // 响应拦截器
       axios.interceptors.response.use(async response => {
         // ...

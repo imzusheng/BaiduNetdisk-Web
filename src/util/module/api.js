@@ -3,6 +3,7 @@
 import {axiosTools, config} from "@/util"
 import {ElMessage} from "element-plus"
 import {computed} from "vue"
+import {util} from "@/util";
 
 let store, state, ws, accessToken
 
@@ -336,11 +337,23 @@ export default class API {
   
   // 记录下载任务
   postRecordTasks = list => {
+    const newList = list.map(v => {
+      return {
+        dlink: v.dlink,
+        filename: v.filename,
+        fsid: v.fs_id,
+        path: v.path,
+        status: 'pending',
+        rawFilename: util.filenameHandle(v.filename, v.fs_id, 'input'),
+        type: 'chunk',
+        total: v.size,
+        progress: 0,
+        curFileSize: 0,
+      }
+    })
     return new Promise(resolve => {
-      axiosTools.proxy('/recordTasks', {
-        params: {
-          list
-        }
+      axiosTools.post('/recordTasks', {
+        list: newList
       }).then(res => resolve(res))
     })
   }

@@ -93,7 +93,6 @@ import {useRouter} from 'vue-router'
 import {computed, onMounted, reactive, toRaw} from 'vue'
 import {Share, Download, Delete} from '@element-plus/icons-vue'
 import {ElLoading, ElMessage, ElMessageBox} from 'element-plus'
-import resJson from '@/assets/json/res.json'
 
 const store = useStore()
 const router = useRouter()
@@ -181,10 +180,17 @@ const toolsDownload = async () => {
   })
   const promiseQueue = new util.PromiseQueue(taskList, 100)
   promiseQueue.getResult().then(res => {
+    // res为所有文件信息，包括文件夹。 需要过滤出文件夹，因为文件夹不包含dlink不能直接下载
+    let files = []
+    // 将不同请求的结果合并成一个数组，保存在files[]
+    Object.values(res).forEach(v => {
+      if (v?.list) files.push(...v?.list)
+    })
+    files = files.filter(v => v.isdir === 0)
     loadingInstance.close() // 关闭全屏动画
-    const sum = Object.values(res).reduce((a, b) => a?.cursor ? a.cursor + b.cursor : a + b.cursor, 0) // 总文件数量
+    // const sum = Object.values(res).reduce((a, b) => a?.cursor ? a.cursor + b.cursor : a + b.cursor, 0) // 总文件数量(废弃，因为把文件夹算了进去)
     ElMessageBox.confirm(
-        `确定要下载这${sum}个文件或文件夹吗?`,
+        `确定要下载这${files.length}个文件或文件夹吗?`,
         '提示',
         {
           confirmButtonText: '确定',
@@ -192,12 +198,6 @@ const toolsDownload = async () => {
           type: 'warning',
         })
         .then(() => {
-          // 收集fsids准备下载
-          const files = []
-          // 将不同请求的结果合并成一个数组，保存在files[]
-          Object.values(res).forEach(v => {
-            if (v?.list) files.push(...v?.list)
-          })
           // 将结果中的fsid提取出来
           const fsids = files.map(v => v.fs_id)
           download(fsids)
@@ -207,14 +207,13 @@ const toolsDownload = async () => {
         })
   })
 }
-
-console.log(resJson)
-
-store.dispatch('postRecordTasks', resJson.list)
-
+// 处理批量下载
 function download(fsids) {
   store.dispatch('getFileMeta', fsids).then(res => {
-    console.log(res)
+    store.dispatch('postRecordTasks', res.list).then(() => {
+      store.commit('setUndoneList', res.list)
+      ElMessage.success('已添加任务到下载列表')
+    })
   })
 }
 

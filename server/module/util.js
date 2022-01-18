@@ -2,6 +2,10 @@ const fs = require('fs')
 const path = require('path')
 const {exec} = require("child_process");
 
+// 下载文件夹download的根路径
+const downloadPath = path.join(path.resolve(), 'download')
+const taskFilename = uk => path.join(downloadPath, `tasks_${uk}.json`)
+
 /**
  * 文件是否存在
  * @param path 文件路径
@@ -215,6 +219,27 @@ const writeLogFile = data => {
   })
 }
 
+// 写入待下载文件，用户专属。 recordTasks路由调用
+const writeRecordTasks = (tasks, uk) => {
+  return new Promise(resolve => {
+    const filePath = taskFilename(uk) // 记录下载任务的文件名(用户uk命名)
+    const exist = isExist(filePath) // 是否存在该文件
+    
+    const jsonData = {}
+    if (exist) Object.assign(jsonData, require(filePath))
+    
+    tasks.forEach(task => {
+      jsonData[task.fsid] = task
+    })
+    
+    fs.writeFile(filePath, JSON.stringify(jsonData), 'utf8', err => {
+      if (err) console.log(err)
+      // delete require.cache[require(filePath)]
+      resolve()
+    })
+  })
+}
+
 // 下载完成删掉
 const deleteLogFile = fsid => {
   const filePath = path.join(__dirname, './unDoneList.json')
@@ -260,6 +285,7 @@ const deleteDownload = (uk, files) => {
 }
 
 module.exports = {
+  taskFilename,
   writeFile,
   isExist,
   listLocalFiles,
@@ -268,5 +294,6 @@ module.exports = {
   writeLogFile,
   getFileRange,
   deleteLogFile,
-  deleteDownload
+  deleteDownload,
+  writeRecordTasks
 }

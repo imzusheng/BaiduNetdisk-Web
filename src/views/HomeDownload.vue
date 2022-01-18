@@ -1,24 +1,25 @@
 <template>
   <div id="download">
-    <ul class="download-list" v-if="Object.values(data).length > 0">
 
-      <!--  删除任务栏 s  -->
-      <div class="download-tools">
-        <!--  多选按钮管理  -->
-        <div>
-          <el-button-group>
-            <el-button type="default" :icon="Close" @click="cancelDownload(null)">删除所有任务</el-button>
-          </el-button-group>
-        </div>
-
-        <!-- 提示文本 s -->
-        <div
-            style="font-size: 14px; padding: 12px 12px 24px; color: rgb(96, 98, 102); display: flex; align-items: center">
-          <info-filled
-              style="width: 16px; height: 16px; cursor: pointer; color: rgba(255,186,21,1); margin-right: 6px;"/>
-          单击可开始/暂停下载
-        </div>
+    <!--  删除任务栏 s  -->
+    <div class="download-tools">
+      <!--  多选按钮管理  -->
+      <div>
+        <el-button-group>
+          <el-button type="default" :icon="Close" @click="cancelDownload(null)">删除所有任务</el-button>
+        </el-button-group>
       </div>
+
+      <!-- 提示文本 s -->
+      <div
+          style="font-size: 14px; color: rgb(96, 98, 102); display: flex; align-items: center">
+        <info-filled
+            style="width: 16px; height: 16px; cursor: pointer; color: rgba(255,186,21,1); margin-right: 6px;"/>
+        单击可开始/暂停下载
+      </div>
+    </div>
+
+    <ul class="download-list" v-if="Object.values(data).length > 0">
 
       <!-- 下载任务项 s -->
       <li
@@ -110,19 +111,24 @@ const cancelDownload = itemData => {
 
 <style lang="less">
 #download {
-  padding: 20px;
   width: 100%;
   height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+
+  .download-tools {
+    display: flex;
+    align-items: center;
+    padding: 12px 32px 12px 20px;
+    justify-content: space-between;
+  }
 
   .download-list {
     width: 100%;
     height: 100%;
     min-height: 200px;
-
-    .download-tools {
-      display: flex;
-      justify-content: space-between;
-    }
+    overflow-y: auto;
+    padding: 20px;
 
     .download-list-item {
       width: 100%;
