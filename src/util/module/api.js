@@ -24,6 +24,8 @@ export default class API {
     // ws消息监听
     ws.on('message', res => {
       const dataToJson = JSON.parse(res.data)
+  
+      // console.log(dataToJson.filename, dataToJson.progress)
       
       if (dataToJson.type === 'end') { // 确认收到结束标记
         // 下载列表删除该任务
@@ -32,15 +34,15 @@ export default class API {
           type: "success",
           message: `${dataToJson.filename} 下载成功`
         })
-        // 更新已经下载的文件
-        // api.listLocalFiles().then(res => {
-        //   store.commit('setLocalFiles', res)
-        // })
       } else if (dataToJson.type === 'pause') { // 暂停标记
-        store.commit('setDownloadStatus', {
-          fsid: dataToJson.fsid,
-          status: 'pause'
+        ElMessage({
+          type: "warning",
+          message: `暂未开放暂停功能`
         })
+        // store.commit('setDownloadStatus', {
+        //   fsid: dataToJson.fsid,
+        //   status: 'pause'
+        // })
       } else if (dataToJson.type === 'chunk') { // 下载中
         state.download[dataToJson.fsid] = dataToJson
       } else {

@@ -4,8 +4,10 @@ const {exec} = require("child_process");
 
 // 下载文件夹download的根路径
 const downloadPath = path.join(path.resolve(), 'download')
-const taskFilename = uk => path.join(downloadPath, `tasks_${uk}.json`)
+// 用户的下载文件夹路径
 const userDownloadPath = uk => path.join(downloadPath, uk)
+// 保存下载任务的json文件名
+const taskFilename = uk => path.join(downloadPath, `tasks_${uk}.json`)
 
 /**
  * 文件是否存在
@@ -303,13 +305,14 @@ const deleteDownload = (uk, files) => {
 }
 
 /**
- * 简单的读取文件
+ * 简单的读取文件,json文件自动parse
  * @param filePath
  * @return {string|null}
  */
 const toolsReadFile = filePath => {
   if (!isExist(filePath)) return null
-  return fs.readFileSync(filePath, {encoding: 'utf-8'})
+  const result = fs.readFileSync(filePath, {encoding: 'utf-8'})
+  return path.extname(filePath) === '.json' ? JSON.parse(result) : result
 }
 
 module.exports = {

@@ -26,7 +26,7 @@ const routerApi = express.Router()
 
 // 获取token授权
 routerApi.get('/auth', async (req, res) => {
-  const result = JSON.parse(toolsReadFile(path.join(path.resolve(), 'auth.json')))
+  const result = toolsReadFile(path.join(path.resolve(), 'auth.json'))
   res.setHeader('Last-Modified', (new Date).toUTCString()) // 防止缓存
   res.send({
     result,
@@ -39,7 +39,7 @@ routerApi.post('/accessToken', async (req, res) => {
     error: true,
     msg: {}
   }
-  const auth = JSON.parse(toolsReadFile(path.join(path.resolve(), 'auth.json')))
+  const auth = toolsReadFile(path.join(path.resolve(), 'auth.json'))
   const {AppKey, SecretKey, Code} = req.body
   const url = `https://openapi.baidu.com/oauth/2.0/token?grant_type=authorization_code&code=${Code}&client_id=${AppKey}&client_secret=${SecretKey}&redirect_uri=${auth.redirect_uri}`
   const accessTokenResult = await getAccessToken()
@@ -61,7 +61,7 @@ routerApi.post('/accessToken', async (req, res) => {
       const exist = isExist(jsonPath)
       let jsonData
       if (exist) { // 存在则引入
-        jsonData = JSON.parse(toolsReadFile(path.join(path.resolve(), 'auth.json')))
+        jsonData = toolsReadFile(path.join(path.resolve(), 'auth.json'))
         Object.keys(data).forEach(k => {
           if (data[k]) jsonData[k] = data[k]
         })
@@ -106,7 +106,7 @@ routerApi.get('/logout', async (req, res) => {
   const exist = isExist(jsonPath)
   let jsonData
   if (exist) {
-    jsonData = JSON.parse(toolsReadFile(path.join(path.resolve(), 'auth.json')))
+    jsonData = toolsReadFile(path.join(path.resolve(), 'auth.json'))
     delete jsonData['access_token']
   }
   

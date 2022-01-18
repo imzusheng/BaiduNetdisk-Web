@@ -111,7 +111,7 @@ const cancelDownload = itemData => {
 // 开始所有任务
 const startDownload = () => {
   api.wsStartDownload({
-    sum: 2
+    sum: 5
   })
 }
 
