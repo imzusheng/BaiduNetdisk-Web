@@ -170,13 +170,12 @@ const listLocalFiles = uk => {
  * @param filename 文件名
  * @return {number|null} number为Range
  */
-const getFileRange = (uk, fsid, filename) => {
+const getFileRange = (uk, filePath) => {
   // 判断用户文件夹是否存在
-  const filepath = path.join(__dirname, `../download/${uk}`)
-  const {filename: newFilename} = filenameHandle(filename, fsid, 'input')
-  const exist = isExist(path.join(filepath, newFilename))
+  const filepath = path.join(path.resolve(), `download/${uk}`, filePath)
+  const exist = isExist(filepath)
   // 根据文件名查询文件信息
-  return exist ? fs.statSync(path.join(filepath, newFilename)).size : null
+  return exist ? fs.statSync(filepath).size : null
 }
 
 /**
@@ -243,7 +242,7 @@ const writeLogFile = data => {
   })
 }
 
-const handleRecordTasks = async (taskInfo, uk, type, source) => {
+const handleRecordTasks = async (taskInfo, uk, type) => {
   if (!isExist(downloadPath)) await mkdirMultiple(downloadPath)
   
   const jsonData = {}
@@ -255,8 +254,6 @@ const handleRecordTasks = async (taskInfo, uk, type, source) => {
   } else if (type === 'write') { // 写入待下载文件，用户专属。 recordTasks路由调用
     taskInfo.forEach(task => jsonData[task.fsid] = task)
   }
-  
-  console.log(jsonData, source)
   
   fs.writeFileSync(filePath, JSON.stringify(jsonData), {flag: 'w+', encoding: 'utf-8'})
 }

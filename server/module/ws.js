@@ -7,12 +7,17 @@ const {
   taskFilename,
   writeDownload,
   handleRecordTasks,
+  toolsReadFile
 } = require('./util')
 
 // process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0'
 
 // 启动WebSocket，端口3102
 const qws = new WsServer({port: 3102})
+// 用户uk
+let userUk
+// 用于回复客户端,因为代理服务器基本只有一个页面,所以可以放到全局
+let wsClient
 
 /**
  * 主要作用是可以随时暂停任务
@@ -27,14 +32,6 @@ const qws = new WsServer({port: 3102})
  * }
  */
 let incomingMessageList = {}
-// const incomingMessageList = new Proxy({}, {
-//   get: function (obj, prop) {
-//     return obj[prop]
-//   },
-//   set: (obj, prop, newVal) => {
-//     obj[prop] = newVal
-//   }
-// })
 /**
  * 主要作用是保存下载进度，频繁更新所以不写入json，暂停时才写入
  * 下载队列信息如：
@@ -49,7 +46,20 @@ let incomingMessageList = {}
  * }
  */
 let downloadQueue = {}
-let userUk // 用户uk
+// 还未开始的任务
+const get = (obj, curIndex) => obj[curIndex]
+const set = (obj, curIndex, newVal) => {
+  if (newVal === null) {
+    delete obj[curIndex]
+    if (Object.keys(obj).length > 0) { // 删除之后仍有其他任务
+      const task = Object.values(obj)[0]
+      downloadOnce(wsClient, userUk, task)
+    }
+  } else obj[curIndex] = newVal
+  return true
+}
+let downloadTasks = new Proxy({}, {get, set})
+
 
 qws.on('message', async (ws, data) => {
   const {
@@ -57,11 +67,12 @@ qws.on('message', async (ws, data) => {
     url,          // 代理下载url
     uk,           // 百度网盘用户ID
     fsid,         // 文件唯一ID
-    sum = 5,
+    sum = 3,
     filename: fn  // 文件名 别名fn
   } = JSON.parse(data)
   
   userUk = uk
+  wsClient = ws
   
   if (type === 'download') { // 确认为下载请求
     
@@ -158,15 +169,20 @@ qws.on('message', async (ws, data) => {
     // 结束请求
     incomingMessageList[fsid].response.destroy() // 暂停下载
     delete incomingMessageList[fsid] // 删除任务
-    await handleRecordTasks(downloadQueue, uk, 'write', 'pause') // 保存进度到json日志
+    await handleRecordTasks(downloadQueue, uk, 'write') // 保存进度到json日志
     ws.send(JSON.stringify({ // 回复敷衍一下
       type: 'pause',
       fsid
     }))
   } else if (type === 'startDownload') {  // 触发所有任务下载
-    delete require.cache[require(taskFilename(uk))] // 清除json缓存
-    const jsonData = require(taskFilename(uk)) // 读取待下载列表
-    const taskList = Object.values(jsonData).slice(0, sum) // 取其中一段任务
+    const jsonObj = JSON.parse(toolsReadFile(taskFilename(uk))) // 读取待下载列表
+    const jsonKeys = Object.keys(jsonObj).slice(0, sum)
+    const taskList = jsonKeys.map(k => { // 取其中一段任务
+      const tempJsonObj = jsonObj[k]
+      delete jsonObj[k]
+      return tempJsonObj
+    })
+    Object.assign(downloadTasks, jsonObj) // 剩余的丢到响应式队列
     taskList.forEach(task => downloadOnce(ws, uk, task))
   }
 })
@@ -174,7 +190,7 @@ qws.on('message', async (ws, data) => {
 // 处理下载一个任务的请求
 function downloadOnce(ws, uk, taskInfo) {
   
-  const {fsid, dlink, filename, total} = taskInfo
+  const {fsid, dlink, filename, total, path: filePath} = taskInfo
   
   // 第一次请求: 打开dlink,等待重定向
   https.get(dlink, {headers: {'Host': 'pcs.baidu.com', 'User-Agent': 'pan.baidu.com'}}, dlinkRes => {
@@ -188,7 +204,7 @@ function downloadOnce(ws, uk, taskInfo) {
   // 第二次请求: 获取资源，开始下载
   function getData(dlinkRes) {
     const redirectUrl = dlinkRes.headers.location.replace('http', 'https') // 替换为https
-    const range = getFileRange(uk, fsid, filename) || 0 // 下载起始位置
+    const range = getFileRange(uk, filePath) || 0 // 下载起始位置
     
     // 对重定向链接发起下载请求
     https.get(redirectUrl, {headers: {Range: `bytes=${range}-`}}, async response => {
@@ -216,7 +232,9 @@ function downloadOnce(ws, uk, taskInfo) {
       
       // 下载结束标记
       response.on('end', () => {
-        handleRecordTasks({fsid}, uk, 'delete', 'end')
+        handleRecordTasks({fsid}, uk, 'delete')
+        downloadTasks[fsid] = null // 赋值为null则被Proxy中set拦截并删除,直接delete无法触发
+        console.log(JSON.parse(JSON.stringify(downloadTasks)))
         delete incomingMessageList[fsid] // 删除下载队列信息.1
         delete downloadQueue[fsid] // 删除下载队列信息.2
         ws.send(JSON.stringify({  // 回复下载结束标记
@@ -235,7 +253,20 @@ function downloadOnce(ws, uk, taskInfo) {
 // 传输中途断开websocket，保存进度到json日志
 qws.on('close', () => {
   console.log('qws - 客户端关闭')
-  handleRecordTasks(downloadQueue, userUk, 'write', 'close').then()
+  handleRecordTasks(downloadQueue, userUk, 'write').then()
   downloadQueue = {}  // 清空下载中的信息.1
   incomingMessageList = {} // 清空下载中的信息.2
+  downloadTasks = new Proxy({}, {get, set}) // 清空下载中的信息.3
 })
+
+// const arr1 = new Proxy({name: 'zusheng'}, {
+//   get: (obj, curIndex) => obj[curIndex],
+//   set: (obj, curIndex, newVal) => {
+//     obj[curIndex] = newVal
+//     return true
+//   }
+// })
+//
+// Object.assign(arr1, {age: 18})
+//
+// console.log(JSON.parse(JSON.stringify(arr1)))

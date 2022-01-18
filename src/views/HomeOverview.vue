@@ -210,9 +210,12 @@ const toolsDownload = async () => {
 // 处理批量下载
 function download(fsids) {
   store.dispatch('getFileMeta', fsids).then(res => {
-    store.dispatch('postRecordTasks', res.list).then(() => {
-      ElMessage.success('已添加任务到下载列表')
+    store.dispatch('postRecordTasks', res.list).then(newList => {
+      const downloadTasks = {}
+      newList.forEach(task => downloadTasks[task.fsid] = task)
+      store.commit('setUndoneList', downloadTasks)
       api.wsStartDownload()
+      ElMessage.success('已添加任务到下载列表')
     })
   })
 }
