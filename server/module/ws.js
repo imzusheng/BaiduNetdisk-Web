@@ -7,6 +7,7 @@ const {
   handleRecordTasks,
   toolsReadFile
 } = require('./util')
+const fs = require("fs");
 
 // process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0'
 
@@ -78,14 +79,14 @@ function getSecondStep(ws, url, taskInfo) {
   
   const range = getFileRange(uk, filePath) || 0 // 下载起始位置
   
+  console.log(filePath, range)
+  
   // 对重定向链接发起下载请求
   https.get(url, {headers: {Range: `bytes=${range}-`}}, async response => {
     
     const wd = await writeDownload(uk, taskInfo) // 打开写入流
     let curFileSize = range // 当前下载的大小
     incomingMessageList[fsid] = response
-    
-    console.log(`下载一个文件, 文件名: ${taskInfo.filename}`)
     
     // 收到数据块
     response.on('data', chunk => {
@@ -105,7 +106,7 @@ function getSecondStep(ws, url, taskInfo) {
     
     // 下载结束标记
     response.on('end', () => {
-      // handleRecordTasks({fsid}, uk, 'delete')
+      handleRecordTasks({fsid}, uk, 'delete')
       delete incomingMessageList[fsid] // 删除下载队列信息.1
       delete downloadTasksList[fsid] // 删除下载队列信息.2
       ws.send(JSON.stringify({  // 回复下载结束标记
@@ -246,7 +247,18 @@ qws.on('message', async (ws, data) => {
     Object.keys(jsonObj).slice(0, sum).forEach(k => downloadOnce(ws, uk, jsonObj[k]))
   }
   
-  ws.on('close', res => {
-    console.log('@ws-close', res)
+  // 客户端退出,保存下载进度
+  ws.on('close', () => {
+    console.log(`客户端 ${ws.uk} 退出`)
+    Object.values(ws.incomingMessageList).forEach(response => response.destroy()) // 销毁所有下载请求
+    const undoneList = Object.values(ws.downloadTasksList).filter(task => task.status === 'run') // 只保留下载中的任务
+    undoneList.forEach(task => {
+      const fullPath = path.join(ws.pathDownload, task.path)
+      const fileStat = fs.statSync(fullPath)
+      if (fileStat) task.curFileSize = fileStat.size // 得到当前文件大小
+      task.progress = (task.curFileSize / task.total * 100).toFixed(2) // 计算百分比
+      task.status = 'pause' // 回复暂停状态
+    })
+    handleRecordTasks(undoneList, ws.uk, 'write')
   })
 })

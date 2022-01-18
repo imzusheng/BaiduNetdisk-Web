@@ -60,8 +60,9 @@ const writeDownload = async (uk, taskInfo) => {
   const noFilenamePath = path.join(userPath, filePath.replace(`/${filename}`, ''))// (不包含文件名)
   // 文件路径是否存在，不存在则创建
   if (!isExist(noFilenamePath)) await mkdirMultiple(noFilenamePath)
+  const fullPath = path.join(userPath, filePath) // 完整路径(包含文件名)
+  console.log(fullPath)
   return new Promise(resolve => {
-    const fullPath = path.join(userPath, filePath) // 完整路径(包含文件名)
     const writeStream = fs.createWriteStream(fullPath, {
       flags: 'a+',
       autoClose: true
@@ -244,12 +245,18 @@ const writeLogFile = data => {
   })
 }
 
+/**
+ * @param {Array|{fsid}} taskInfo
+ * @param uk
+ * @param type
+ * @return {Promise<void>}
+ */
 const handleRecordTasks = async (taskInfo, uk, type) => {
-  if (!isExist(downloadPath)) await mkdirMultiple(downloadPath)
+  if (!isExist(downloadPath)) await mkdirMultiple(downloadPath) // 下载目录不存在则创建
   
   const jsonData = {}
   const filePath = taskFilename(uk) // 记录下载任务的文件名(用户uk命名)
-  if (isExist(filePath)) Object.assign(jsonData, JSON.parse(toolsReadFile(filePath)))
+  if (isExist(filePath)) Object.assign(jsonData, toolsReadFile(filePath))
   
   if (type === 'delete') { // 删除待下载文件，ws下载完成后调用
     delete jsonData[taskInfo.fsid]
