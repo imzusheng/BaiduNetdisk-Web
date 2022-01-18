@@ -39,10 +39,10 @@
         <template #default="scope">
           <span @dblclick="dblclick">
                 <img
-                    :src="`http://cdn.zusheng.club/icon/${util.getFileIcon(scope.row.rawFilename)}`"
+                    :src="`http://cdn.zusheng.club/icon/${util.getFileIcon(scope.row.filename)}`"
                     class="table-file-icon"
                     alt="icon">
-                <div class="home-main-filename user-select-not">{{ scope.row?.rawFilename }}</div>
+                <div class="home-main-filename user-select-not">{{ scope.row?.filename }}</div>
               </span>
         </template>
       </el-table-column>
@@ -58,7 +58,7 @@
           <!-- 在未完成项目的一个td单元格中添加了一个span标记，通过他找到父级tr元素 -->
           <span :ref="setNotDownload" v-if="scope.row?.status === 'download'"></span>
           <span :ref="removeNotDownload" v-if="scope.row?.status !== 'download'"></span>
-          <span>{{ util.getFileExt(scope.row.rawFilename) }}</span>
+          <span>{{ util.getFileExt(scope.row.filename) }}</span>
         </template>
       </el-table-column>
       <!-- 大小 s -->

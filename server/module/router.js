@@ -137,6 +137,7 @@ routerApi.get('/undoneList', async (req, res) => {
   res.send(result)
 })
 
+// 删除已下载的文件
 routerApi.get('/deleteDownload', async (req, res) => {
   const files = req.query.list
   const uk = req.headers?.useruk

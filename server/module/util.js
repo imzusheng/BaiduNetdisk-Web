@@ -130,35 +130,35 @@ function filenameHandle(filename, fsid, type) {
  * @return {Promise<array>} 返回目录中所有文件信息
  */
 const listLocalFiles = uk => {
-  return new Promise(resolve => {
-    const filepath = path.join(__dirname, `../download/${uk}`)
-    // 列出目录中所有文件名
-    fs.readdir(filepath, (err, fileList) => {
-      const fileInfoList = []
-      if (!err) {
-        // 遍历文件名
-        fileList.forEach(filename => {
-          const exist = isExist(path.join(filepath, filename))
-          // 根据文件名查询文件信息
-          const fileStat = exist ? fs.statSync(path.join(filepath, filename)) : null
-          // 文件存在， 因为可能文件就在刚刚被删掉了， 确保不会报错
-          if (fileStat !== null) {
-            const {size, birthtimeMs} = fileStat
-            // 下面对filename特殊处理去除fsid
-            const {filename: rawFilename, fsid, fileExt} = filenameHandle(filename, null, 'output')
-            fileInfoList.push({
-              size,
-              fsid,
-              filename,
-              ext: fileExt,
-              rawFilename,
-              birthtimeMs: birthtimeMs.toFixed(0)
-            })
-          }
+  
+  const fileInfoList = []
+  
+  // 列出目录中所有文件名(深度遍历)
+  function listFilesInfo(filepath) {
+    const fileList = fs.readdirSync(filepath) // 获取目录下所有文件或文件夹名字
+    fileList.forEach(filename => { // 根据文件名查询文件信息
+      if (!isExist(path.join(filepath, filename))) return // 确保文件存在
+      const fullPath = path.join(filepath, filename) // 文件所在完整路径(包含文件名或文件夹名)
+      const fileStat = fs.statSync(fullPath) // 查询文件信息
+      if (fileStat.isDirectory()) { // 文件名是目录时
+        listFilesInfo(fullPath)
+      } else {
+        const {size, birthtimeMs} = fileStat
+        const fileExt = path.extname(filename)
+        fileInfoList.push({
+          size,
+          filename,
+          ext: fileExt,
+          birthtimeMs: birthtimeMs.toFixed(0)
         })
       }
-      resolve(fileInfoList)
     })
+  }
+  
+  return new Promise(resolve => {
+    const filepath = path.join(__dirname, `../download/${uk}`)
+    listFilesInfo(filepath)
+    resolve(fileInfoList)
   })
 }
 
