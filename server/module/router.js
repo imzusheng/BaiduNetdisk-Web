@@ -1,5 +1,14 @@
 const express = require("express");
-const {listLocalFiles, openExplorer, deleteFiles, isExist, deleteDownload, writeRecordTasks, taskFilename} = require("./util")
+const {
+  listLocalFiles,
+  openExplorer,
+  deleteFiles,
+  isExist,
+  deleteDownload,
+  handleRecordTasks,
+  taskFilename,
+  toolsReadFile
+} = require("./util")
 const path = require("path");
 const querystring = require("querystring")
 const https = require("https")
@@ -17,8 +26,7 @@ const routerApi = express.Router()
 
 // 获取token授权
 routerApi.get('/auth', async (req, res) => {
-  delete require.cache[require('../auth.json')]
-  const result = require('../auth.json')
+  const result = JSON.parse(toolsReadFile(path.join(path.resolve(), 'auth.json')))
   res.setHeader('Last-Modified', (new Date).toUTCString()) // 防止缓存
   res.send({
     result,
@@ -31,8 +39,7 @@ routerApi.post('/accessToken', async (req, res) => {
     error: true,
     msg: {}
   }
-  delete require.cache[require('../auth.json')]
-  const auth = require('../auth.json')
+  const auth = JSON.parse(toolsReadFile(path.join(path.resolve(), 'auth.json')))
   const {AppKey, SecretKey, Code} = req.body
   const url = `https://openapi.baidu.com/oauth/2.0/token?grant_type=authorization_code&code=${Code}&client_id=${AppKey}&client_secret=${SecretKey}&redirect_uri=${auth.redirect_uri}`
   const accessTokenResult = await getAccessToken()
@@ -54,7 +61,7 @@ routerApi.post('/accessToken', async (req, res) => {
       const exist = isExist(jsonPath)
       let jsonData
       if (exist) { // 存在则引入
-        jsonData = require(jsonPath)
+        jsonData = JSON.parse(toolsReadFile(path.join(path.resolve(), 'auth.json')))
         Object.keys(data).forEach(k => {
           if (data[k]) jsonData[k] = data[k]
         })
@@ -99,7 +106,7 @@ routerApi.get('/logout', async (req, res) => {
   const exist = isExist(jsonPath)
   let jsonData
   if (exist) {
-    jsonData = require(jsonPath)
+    jsonData = JSON.parse(toolsReadFile(path.join(path.resolve(), 'auth.json')))
     delete jsonData['access_token']
   }
   
@@ -132,8 +139,7 @@ routerApi.get('/deleteFiles', async (req, res) => {
 // 查看未完成的任务
 routerApi.get('/undoneList', async (req, res) => {
   const filePath = taskFilename(req.headers.useruk)
-  const result = isExist(filePath) ? require(filePath) : {}
-  delete require.cache[require(filePath)]
+  const result = toolsReadFile(filePath) || {}
   res.send(result)
 })
 
@@ -159,10 +165,9 @@ routerApi.get('/proxy', async (req, res) => {
   
   res.send(result)
 })
-
 // 记录下载任务
 routerApi.post('/recordTasks', async (req, res) => {
-  await writeRecordTasks(req.body.list, req.headers?.useruk)
+  await handleRecordTasks(req.body.list, req.headers?.useruk, 'write')
   res.send('success')
 })
 

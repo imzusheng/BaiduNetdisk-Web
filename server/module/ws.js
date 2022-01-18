@@ -1,6 +1,13 @@
 const WsServer = require('quick-ws-server')
 const https = require("https")
-const {writeFile, writeLogFile, getFileRange, deleteLogFile, taskFilename, writeDownload} = require('./util')
+const {
+  writeFile,
+  getFileRange,
+  deleteLogFile,
+  taskFilename,
+  writeDownload,
+  handleRecordTasks,
+} = require('./util')
 
 // process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0'
 
@@ -19,14 +26,15 @@ const qws = new WsServer({port: 3102})
  *    }
  * }
  */
-const incomingMessageList = new Proxy({}, {
-  get: function (obj, prop) {
-    return obj[prop]
-  },
-  set: (obj, prop, newVal) => {
-    obj[prop] = newVal
-  }
-})
+let incomingMessageList = {}
+// const incomingMessageList = new Proxy({}, {
+//   get: function (obj, prop) {
+//     return obj[prop]
+//   },
+//   set: (obj, prop, newVal) => {
+//     obj[prop] = newVal
+//   }
+// })
 /**
  * 主要作用是保存下载进度，频繁更新所以不写入json，暂停时才写入
  * 下载队列信息如：
@@ -41,8 +49,9 @@ const incomingMessageList = new Proxy({}, {
  * }
  */
 let downloadQueue = {}
+let userUk // 用户uk
 
-qws.on('message', (ws, data) => {
+qws.on('message', async (ws, data) => {
   const {
     type,         // 请求类型
     url,          // 代理下载url
@@ -51,6 +60,8 @@ qws.on('message', (ws, data) => {
     sum = 5,
     filename: fn  // 文件名 别名fn
   } = JSON.parse(data)
+  
+  userUk = uk
   
   if (type === 'download') { // 确认为下载请求
     
@@ -145,24 +156,18 @@ qws.on('message', (ws, data) => {
     })
   } else if (type === 'pause') { // 确认为暂停下载请求
     // 结束请求
-    incomingMessageList[fsid].response.destroy()
-    // 删除任务信息
-    delete incomingMessageList[fsid]
-    // 保存进度到json日志
-    writeLogFile(downloadQueue)
-    // 回复敷衍一下
-    ws.send(JSON.stringify({
+    incomingMessageList[fsid].response.destroy() // 暂停下载
+    delete incomingMessageList[fsid] // 删除任务
+    await handleRecordTasks(downloadQueue, uk, 'write', 'pause') // 保存进度到json日志
+    ws.send(JSON.stringify({ // 回复敷衍一下
       type: 'pause',
       fsid
     }))
   } else if (type === 'startDownload') {  // 触发所有任务下载
-    delete require.cache[require(taskFilename(uk))]
+    delete require.cache[require(taskFilename(uk))] // 清除json缓存
     const jsonData = require(taskFilename(uk)) // 读取待下载列表
-    console.log('开始下载所有任务: ', jsonData)
     const taskList = Object.values(jsonData).slice(0, sum) // 取其中一段任务
-    taskList.forEach(task => {
-      downloadOnce(ws, uk, task)
-    })
+    taskList.forEach(task => downloadOnce(ws, uk, task))
   }
 })
 
@@ -170,74 +175,67 @@ qws.on('message', (ws, data) => {
 function downloadOnce(ws, uk, taskInfo) {
   
   const {fsid, dlink, filename, total} = taskInfo
-  const range = getFileRange(uk, fsid, filename) || 0 // 下载起始位置
   
-  console.log('开始下载', dlink)
-  
-  // 打开dlink,等待重定向
-  https.get(dlink, {
-    headers: {
-      'Host': 'pcs.baidu.com',
-      'User-Agent': 'pan.baidu.com'
-    }
-  }, dlinkRes => {
-    
+  // 第一次请求: 打开dlink,等待重定向
+  https.get(dlink, {headers: {'Host': 'pcs.baidu.com', 'User-Agent': 'pan.baidu.com'}}, dlinkRes => {
     let str = ''
     dlinkRes.on('data', res => str += res)
     dlinkRes.on('end', () => {
-      // 302重定向，重定向链接为headers.location
-      if (dlinkRes.headers.location) {
-        
-        const redirectUrl = dlinkRes.headers.location.replace('http', 'https') // 替换为https
-        console.log('获得重定向: ', dlinkRes.headers?.location)
-        
-        // 对重定向链接发起下载请求
-        https.get(redirectUrl, {headers: {Range: `bytes=${range}-`}}, async response => {
-          
-          const wd = await writeDownload(uk, taskInfo) // 打开写入流
-          let curFileSize = range // 当前下载的大小
-          
-          // 收到数据块
-          response.on('data', chunk => {
-            wd.write(chunk) // 开始写入  如果需要直接转发资源，使用Buffer.from(chunk).buffer转换为ArrayBuffer
-            curFileSize += chunk.length // 记录当前数据大小，用来计算下载进度
-            const progressInfo = { // 回传当前的下载进度到前端
-              fsid,
-              total,
-              filename,
-              curFileSize,
-              status: 'run',
-              type: 'chunk',
-              progress: (curFileSize / total * 100).toFixed(2)
-            }
-            ws.send(JSON.stringify(progressInfo)) // 发送到前端
-            downloadQueue[fsid] = Object.assign({response}, progressInfo) // 服务器存一份
-          })
-          
-          // 下载结束标记
-          response.on('end', () => {
-            delete downloadQueue[fsid] // 删除下载队列信息
-            // 回复下载结束标记
-            ws.send(JSON.stringify({
-              fsid,
-              filename,
-              type: 'end'
-            }))
-            wd.close() // fs.WriteStream.close 一般来说会自动关闭
-          })
-          
-        })
-      } else {
-        console.dir(JSON.parse(str))
-      }
+      dlinkRes.headers.location ? getData(dlinkRes) : console.dir(JSON.parse(str)) // 302重定向，重定向链接为headers.location
     })
-    
   })
+  
+  // 第二次请求: 获取资源，开始下载
+  function getData(dlinkRes) {
+    const redirectUrl = dlinkRes.headers.location.replace('http', 'https') // 替换为https
+    const range = getFileRange(uk, fsid, filename) || 0 // 下载起始位置
+    
+    // 对重定向链接发起下载请求
+    https.get(redirectUrl, {headers: {Range: `bytes=${range}-`}}, async response => {
+      
+      const wd = await writeDownload(uk, taskInfo) // 打开写入流
+      let curFileSize = range // 当前下载的大小
+      
+      // 收到数据块
+      response.on('data', chunk => {
+        wd.write(chunk) // 开始写入  如果需要直接转发资源，使用Buffer.from(chunk).buffer转换为ArrayBuffer
+        curFileSize += chunk.length // 记录当前数据大小，用来计算下载进度
+        const progressInfo = { // 回传当前的下载进度到前端
+          fsid,
+          total,
+          filename,
+          curFileSize,
+          status: 'run',
+          type: 'chunk',
+          progress: (curFileSize / total * 100).toFixed(2)
+        }
+        ws.send(JSON.stringify(progressInfo)) // 发送到前端
+        incomingMessageList[fsid] = response
+        downloadQueue[fsid] = Object.assign(taskInfo, progressInfo) // 服务器存一份
+      })
+      
+      // 下载结束标记
+      response.on('end', () => {
+        handleRecordTasks({fsid}, uk, 'delete', 'end')
+        delete incomingMessageList[fsid] // 删除下载队列信息.1
+        delete downloadQueue[fsid] // 删除下载队列信息.2
+        ws.send(JSON.stringify({  // 回复下载结束标记
+          fsid,
+          filename,
+          type: 'end'
+        }))
+        wd.close() // fs.WriteStream.close 一般来说会自动关闭
+      })
+      
+    })
+  }
+  
 }
 
 // 传输中途断开websocket，保存进度到json日志
 qws.on('close', () => {
   console.log('qws - 客户端关闭')
-  // writeLogFile(downloadQueue) // 保存进度到json日志
-  downloadQueue = {}  // 清空下载中的信息
+  handleRecordTasks(downloadQueue, userUk, 'write', 'close').then()
+  downloadQueue = {}  // 清空下载中的信息.1
+  incomingMessageList = {} // 清空下载中的信息.2
 })

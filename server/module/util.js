@@ -157,6 +157,7 @@ const listLocalFiles = uk => {
   
   return new Promise(resolve => {
     const filepath = path.join(__dirname, `../download/${uk}`)
+    if (!isExist(filepath)) mkdirMultiple(filepath)
     listFilesInfo(filepath)
     resolve(fileInfoList)
   })
@@ -242,27 +243,22 @@ const writeLogFile = data => {
   })
 }
 
-// 写入待下载文件，用户专属。 recordTasks路由调用
-const writeRecordTasks = async (tasks, uk) => {
-  
-  const filePath = taskFilename(uk) // 记录下载任务的文件名(用户uk命名)
-  const exist = isExist(filePath) // 是否存在该文件
+const handleRecordTasks = async (taskInfo, uk, type, source) => {
   if (!isExist(downloadPath)) await mkdirMultiple(downloadPath)
   
   const jsonData = {}
-  if (exist) Object.assign(jsonData, require(filePath))
+  const filePath = taskFilename(uk) // 记录下载任务的文件名(用户uk命名)
+  if (isExist(filePath)) Object.assign(jsonData, JSON.parse(toolsReadFile(filePath)))
   
-  tasks.forEach(task => {
-    jsonData[task.fsid] = task
-  })
+  if (type === 'delete') { // 删除待下载文件，ws下载完成后调用
+    delete jsonData[taskInfo.fsid]
+  } else if (type === 'write') { // 写入待下载文件，用户专属。 recordTasks路由调用
+    taskInfo.forEach(task => jsonData[task.fsid] = task)
+  }
   
-  fs.writeFile(filePath, JSON.stringify(jsonData), {
-    encoding: 'utf8',
-    flag: 'w+'
-  }, err => {
-    if (err) console.log(err)
-    // delete require.cache[require(filePath)]
-  })
+  console.log(jsonData, source)
+  
+  fs.writeFileSync(filePath, JSON.stringify(jsonData), {flag: 'w+', encoding: 'utf-8'})
 }
 
 // 下载完成删掉
@@ -309,7 +305,18 @@ const deleteDownload = (uk, files) => {
   })
 }
 
+/**
+ * 简单的读取文件
+ * @param filePath
+ * @return {string|null}
+ */
+const toolsReadFile = filePath => {
+  if (!isExist(filePath)) return null
+  return fs.readFileSync(filePath, {encoding: 'utf-8'})
+}
+
 module.exports = {
+  toolsReadFile,
   taskFilename,
   writeFile,
   isExist,
@@ -320,6 +327,6 @@ module.exports = {
   getFileRange,
   deleteLogFile,
   deleteDownload,
-  writeRecordTasks,
+  handleRecordTasks,
   writeDownload
 }
