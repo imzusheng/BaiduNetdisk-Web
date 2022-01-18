@@ -5,6 +5,7 @@ const {exec} = require("child_process");
 // 下载文件夹download的根路径
 const downloadPath = path.join(path.resolve(), 'download')
 const taskFilename = uk => path.join(downloadPath, `tasks_${uk}.json`)
+const userDownloadPath = uk => path.join(downloadPath, uk)
 
 /**
  * 文件是否存在
@@ -34,9 +35,31 @@ const writeFile = async (uk, filename, fsid) => {
   const fullPath = path.join(filepath, newFilename)
   // 文件是否存在
   const exist = isExist(filepath)
+  console.log(filepath, fullPath)
   // 不存在则创建
   if (!exist) await mkdirMultiple(filepath)
   return new Promise(resolve => {
+    const writeStream = fs.createWriteStream(fullPath, {
+      flags: 'a+',
+      autoClose: true
+    })
+    resolve(writeStream)
+  })
+}
+
+/**
+ * @param uk 用户ID
+ * @param taskInfo 下载任务的信息
+ * @return {Promise<WriteStream>}
+ */
+const writeDownload = async (uk, taskInfo) => {
+  const {path: filePath, filename} = taskInfo
+  const userPath = userDownloadPath(uk.toString()) // 用户文件夹
+  const noFilenamePath = path.join(userPath, filePath.replace(`/${filename}`, ''))// (不包含文件名)
+  // 文件路径是否存在，不存在则创建
+  if (!isExist(noFilenamePath)) await mkdirMultiple(noFilenamePath)
+  return new Promise(resolve => {
+    const fullPath = path.join(userPath, filePath) // 完整路径(包含文件名)
     const writeStream = fs.createWriteStream(fullPath, {
       flags: 'a+',
       autoClose: true
@@ -220,23 +243,25 @@ const writeLogFile = data => {
 }
 
 // 写入待下载文件，用户专属。 recordTasks路由调用
-const writeRecordTasks = (tasks, uk) => {
-  return new Promise(resolve => {
-    const filePath = taskFilename(uk) // 记录下载任务的文件名(用户uk命名)
-    const exist = isExist(filePath) // 是否存在该文件
-    
-    const jsonData = {}
-    if (exist) Object.assign(jsonData, require(filePath))
-    
-    tasks.forEach(task => {
-      jsonData[task.fsid] = task
-    })
-    
-    fs.writeFile(filePath, JSON.stringify(jsonData), 'utf8', err => {
-      if (err) console.log(err)
-      // delete require.cache[require(filePath)]
-      resolve()
-    })
+const writeRecordTasks = async (tasks, uk) => {
+  
+  const filePath = taskFilename(uk) // 记录下载任务的文件名(用户uk命名)
+  const exist = isExist(filePath) // 是否存在该文件
+  if (!isExist(downloadPath)) await mkdirMultiple(downloadPath)
+  
+  const jsonData = {}
+  if (exist) Object.assign(jsonData, require(filePath))
+  
+  tasks.forEach(task => {
+    jsonData[task.fsid] = task
+  })
+  
+  fs.writeFile(filePath, JSON.stringify(jsonData), {
+    encoding: 'utf8',
+    flag: 'w+'
+  }, err => {
+    if (err) console.log(err)
+    // delete require.cache[require(filePath)]
   })
 }
 
@@ -295,5 +320,6 @@ module.exports = {
   getFileRange,
   deleteLogFile,
   deleteDownload,
-  writeRecordTasks
+  writeRecordTasks,
+  writeDownload
 }

@@ -133,6 +133,7 @@ routerApi.get('/deleteFiles', async (req, res) => {
 routerApi.get('/undoneList', async (req, res) => {
   const filePath = taskFilename(req.headers.useruk)
   const result = isExist(filePath) ? require(filePath) : {}
+  delete require.cache[require(filePath)]
   res.send(result)
 })
 

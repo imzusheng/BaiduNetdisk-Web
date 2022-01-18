@@ -24,6 +24,7 @@ export default class API {
     // ws消息监听
     ws.on('message', res => {
       const dataToJson = JSON.parse(res.data)
+      console.log(dataToJson)
       if (dataToJson.type === 'end') { // 确认收到结束标记
         // 下载列表删除该任务
         delete state.download[dataToJson.fsid]
@@ -343,7 +344,7 @@ export default class API {
         filename: v.filename,
         fsid: v.fs_id,
         path: v.path,
-        status: 'pending',
+        status: 'pause',
         rawFilename: util.filenameHandle(v.filename, v.fs_id, 'input'),
         type: 'chunk',
         total: v.size,
@@ -358,5 +359,11 @@ export default class API {
     })
   }
   
-  
+  // ws触发下载任务
+  wsStartDownload = (opt) => {
+    ws.sendMsg(Object.assign({
+      type: 'startDownload',
+      uk: JSON.stringify(store.state.userInfo?.uk)
+    }, opt))
+  }
 }

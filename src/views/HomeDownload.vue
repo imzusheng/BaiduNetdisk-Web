@@ -6,7 +6,8 @@
       <!--  多选按钮管理  -->
       <div>
         <el-button-group>
-          <el-button type="default" :icon="Close" @click="cancelDownload(null)">删除所有任务</el-button>
+          <el-button type="primary" :icon="Close" @click="cancelDownload(null)" plain round>删除所有任务</el-button>
+          <el-button type="primary" :icon="Download" @click="startDownload" round>开始所有任务</el-button>
         </el-button-group>
       </div>
 
@@ -65,7 +66,7 @@
 import {useStore} from "vuex";
 import {computed, toRaw} from "vue"
 import {util, api} from '@/util'
-import {InfoFilled, Close, DeleteFilled} from "@element-plus/icons-vue"
+import {InfoFilled, Close, DeleteFilled, Download} from "@element-plus/icons-vue"
 
 const store = useStore()
 // 未完成的任务列表数据
@@ -107,6 +108,13 @@ const cancelDownload = itemData => {
   }
 }
 
+// 开始所有任务
+const startDownload = () => {
+  api.wsStartDownload({
+    sum: 2
+  })
+}
+
 </script>
 
 <style lang="less">
@@ -119,7 +127,7 @@ const cancelDownload = itemData => {
   .download-tools {
     display: flex;
     align-items: center;
-    padding: 12px 32px 12px 20px;
+    padding: 20px 32px 12px 20px;
     justify-content: space-between;
   }
 

@@ -212,6 +212,7 @@ function download(fsids) {
   store.dispatch('getFileMeta', fsids).then(res => {
     store.dispatch('postRecordTasks', res.list).then(() => {
       store.commit('setUndoneList', res.list)
+      api.wsStartDownload()
       ElMessage.success('已添加任务到下载列表')
     })
   })
