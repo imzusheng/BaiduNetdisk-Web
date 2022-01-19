@@ -110,9 +110,13 @@ function filenameHandle(filename, fsid, type) {
  * @param uk 用户ID
  * @return {Promise<array>} 返回目录中所有文件信息
  */
-const listLocalFiles = uk => {
+const listLocalFiles = async uk => {
   
   const fileInfoList = []
+  
+  const filepath = path.join(path.resolve(), `download/${uk}`)
+  if (!isExist(filepath)) await mkdirMultiple(filepath)
+  listFilesInfo(filepath)
   
   // 列出目录中所有文件名(深度遍历)
   function listFilesInfo(filepath) {
@@ -134,6 +138,7 @@ const listLocalFiles = uk => {
           size,
           filename,
           path: fullPath,
+          relativePath: fullPath.replace(path.join(path.resolve(), `download/${uk}`), ''),
           ext: fileExt,
           birthtimeMs: birthtimeMs.toFixed(0)
         })
@@ -141,12 +146,9 @@ const listLocalFiles = uk => {
     })
   }
   
-  return new Promise(resolve => {
-    const filepath = path.join(__dirname, `../download/${uk}`)
-    if (!isExist(filepath)) mkdirMultiple(filepath)
-    listFilesInfo(filepath)
-    resolve(fileInfoList)
-  })
+  console.log(fileInfoList)
+  
+  return fileInfoList
 }
 
 /**

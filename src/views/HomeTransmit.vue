@@ -14,7 +14,9 @@
           <el-button type="default" :icon="FolderOpened" @click="api.openExplorer('')">打开文件夹</el-button>
           <el-button type="default" :icon="RefreshLeft" @click="store.dispatch('getLocalFiles')">刷新</el-button>
         </el-button-group>
-        <el-button style="margin-left: 8px" type="danger" :icon="FolderDelete" v-if="deleteBtn" @click="deleteFiles">删除文件</el-button>
+        <el-button style="margin-left: 8px" type="danger" :icon="FolderDelete" v-if="deleteBtn" @click="deleteFiles">
+          删除文件
+        </el-button>
       </div>
       <!-- 提示文本 s -->
       <div style="font-size: 14px; padding: 12px; color: rgb(96, 98, 102); display: flex; align-items: center">
@@ -117,10 +119,13 @@ const removeNotDownload = async el => {
 
 // 表格数据
 const listLocalFiles = computed(() => {
-  const args = Object.keys(store.state.download)
+  // 取下载列表的文件路径(不会重复)
+  const args = Object.values(store.state.download).map(v => v.path)
   // map让未下载完成的项目变个颜色
   return store.state.listLocalFiles.map(v => {
-    if (args.includes(v.fsid)) {
+    const relativePath = v.relativePath.replace(/\\/g, '/')
+    console.log(relativePath)
+    if (args.includes(relativePath)) {
       v.status = 'download'
     } else {
       v.status = 'done'
