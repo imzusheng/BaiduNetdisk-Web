@@ -168,18 +168,16 @@ const getFileRange = (uk, filePath) => {
 /**
  * exec 打开本地目录
  * @param uk 用户ID命名的专属文件夹
- * @param filename 文件名
+ * @param filePath 文件路径
+ * @param isDir 是否是文件夹
  * @return {Promise<void>}
  */
-const openExplorer = async (uk, filename) => {
-  let filePath
+const openExplorer = async (uk, filePath, isDir) => {
   let command
-  if (filename) {
-    filePath = path.join(__dirname, `../download/${uk}/` + filename)
+  if (isDir) {
     command = `explorer.exe /select,"${filePath}"`
   } else {
-    await mkdirMultiple(path.join(__dirname, `../download/${uk}`))
-    filePath = path.join(__dirname, `../download/${uk}`)
+    if (!isExist(filePath)) await mkdirMultiple(filePath)
     command = `explorer.exe "${filePath}"`
   }
   exec(command)

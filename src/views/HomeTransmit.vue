@@ -39,7 +39,7 @@
       <!-- 文件名 s -->
       <el-table-column property="rawFilename" label="文件名" min-width="200" sortable>
         <template #default="scope">
-          <span @dblclick="dblclick">
+          <span @dblclick="dblclick(scope.row.path)">
                 <img
                     :src="`http://cdn.zusheng.club/icon/${util.getFileIcon(scope.row.filename)}`"
                     class="table-file-icon"
@@ -91,6 +91,7 @@ import {useStore} from "vuex"
 const store = useStore()
 const deleteBtn = ref(false)
 const selectFiles = reactive([])
+
 // 在未完成项目的一个td单元格中添加了一个span标记，通过他找到父级tr元素, element-ui中无法直接给表格行添加class
 const setNotDownload = async el => {
   /**
@@ -108,6 +109,7 @@ const setNotDownload = async el => {
   const classList = [...tableRow.classList]
   if (!classList.includes('notDownload')) tableRow.classList.add('notDownload')
 }
+
 // 下载完成,删除标记
 const removeNotDownload = async el => {
   await nextTick()
@@ -124,7 +126,6 @@ const listLocalFiles = computed(() => {
   // map让未下载完成的项目变个颜色
   return store.state.listLocalFiles.map(v => {
     const relativePath = v.relativePath.replace(/\\/g, '/')
-    console.log(relativePath)
     if (args.includes(relativePath)) {
       v.status = 'download'
     } else {
@@ -156,13 +157,15 @@ const deleteFiles = () => {
   })
 }
 
-const dblclick = e => {
-  api.openExplorer(e.filename)
+// 双击打开文件夹
+const dblclick = path => {
+  api.openExplorer(path, false)
   ElMessage({
     message: '正在打开文件夹，请稍后..',
     type: 'success',
   })
 }
+
 </script>
 
 <style lang="less">

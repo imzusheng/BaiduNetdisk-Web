@@ -242,10 +242,11 @@ export default class API {
   }
   
   // 打开本地文件夹
-  openExplorer = (filename = '') => {
+  openExplorer = (filePath = '', isDir = false) => {
     axiosTools.proxy('/openExplorer', {
       params: {
-        filename,
+        filePath,
+        isDir,
         cross: true
       }
     }).then()

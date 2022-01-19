@@ -123,8 +123,8 @@ routerApi.get('/listLocal', async (req, res) => {
 
 // 打开本地下载目录
 routerApi.get('/openExplorer', async (req, res) => {
-  const filename = req.query.filename
-  await openExplorer(req.headers?.useruk, filename)
+  const {filePath, isDir} = req.query
+  await openExplorer(req.headers?.useruk, filePath, isDir)
   res.send('success')
 })
 
