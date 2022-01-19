@@ -2,12 +2,11 @@ const WsServer = require('quick-ws-server')
 const https = require("https")
 const path = require('path')
 const {
-  getFileRange,
   writeDownload,
   handleRecordTasks,
-  toolsReadFile
+  toolsReadFile,
+  getFileRange
 } = require('./util')
-const fs = require("fs");
 
 // process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0'
 
@@ -29,14 +28,6 @@ function createProxy(ws, uk) {
     }
   }
   return new Proxy({}, {get, set, deleteProperty})
-}
-
-// 处理下载一个任务的请求
-function downloadOnce(ws, uk, taskInfo) {
-  ws.downloadTasksList[taskInfo.fsid].status = 'run' // 已经开始的任务做一个标记,(方便在deleteProperty中识别)以免重复下载
-  getFirstStep(ws, taskInfo.dlink).then(url => {
-    getSecondStep(ws, url, taskInfo)
-  })
 }
 
 /**
@@ -73,7 +64,7 @@ function getFirstStep(ws, dlink) {
 function getSecondStep(ws, url, taskInfo) {
   
   const {path: filePath, fsid, total, filename} = taskInfo
-  const {uk, incomingMessageList, downloadTasksList} = ws
+  const {uk, incomingMessageList, downloadTasksList, writeStreamList} = ws
   
   const range = getFileRange(uk, filePath) || 0 // 下载起始位置
   
@@ -88,15 +79,18 @@ function getSecondStep(ws, url, taskInfo) {
     const wd = await writeDownload(uk, taskInfo) // 打开写入流
     let curFileSize = range // 当前下载的大小
     incomingMessageList[fsid] = response
-    
-    let str = ''
+    writeStreamList[fsid] = wd
     
     // 收到数据块
     response.on('data', chunk => {
-      str += chunk
+      if (!ws.online) {
+        wd.end()
+        response.destroy()
+        return
+      }
       wd.write(chunk) // 开始写入  如果需要直接转发资源，使用Buffer.from(chunk).buffer转换为ArrayBuffer
       curFileSize += chunk.length // 记录当前数据大小，用来计算下载进度
-      const progressInfo = { // 回传当前的下载进度到前端
+      ws.send(JSON.stringify({
         fsid,
         total,
         filename,
@@ -104,26 +98,36 @@ function getSecondStep(ws, url, taskInfo) {
         status: 'run',
         type: 'chunk',
         progress: (curFileSize / total * 100).toFixed(2)
-      }
-      ws.send(JSON.stringify(progressInfo)) // 发送到前端
+      }))  // 回传当前的下载进度到前端
     })
     
     // 下载结束标记
     response.on('end', () => {
-      if (str.length < 2048) {
-        console.log(str, url)
-      }
       handleRecordTasks({fsid}, uk, 'delete')
       delete incomingMessageList[fsid] // 删除下载队列信息.1
-      delete downloadTasksList[fsid] // 删除下载队列信息.2
+      delete writeStreamList[fsid] // 删除下载队列信息.2
+      delete downloadTasksList[fsid] // 删除下载队列信息.3
       ws.send(JSON.stringify({  // 回复下载结束标记
         fsid,
         filename,
         type: 'end'
       }))
+      wd.end() // 文件写入结束
     })
     
   })
+}
+
+// 处理下载一个任务的请求
+function downloadOnce(ws, uk, taskInfo) {
+  ws.downloadTasksList[taskInfo.fsid].status = 'run' // 已经开始的任务做一个标记,(方便在deleteProperty中识别)以免重复下载
+  try {
+    getFirstStep(ws, taskInfo.dlink).then(url => {
+      if (ws.online) getSecondStep(ws, url, taskInfo)
+    })
+  } catch (e) {
+    console.log(e)
+  }
 }
 
 qws.on('message', async (ws, data) => {
@@ -134,6 +138,9 @@ qws.on('message', async (ws, data) => {
     accessToken   // 令牌
   } = JSON.parse(data)
   
+  
+  ws.online = true
+  
   if (!ws?.uk || !ws.access_token) { // 这个客户端第一次发消息过来,欢迎一下
     ws.uk = uk
     ws.access_token = accessToken
@@ -142,6 +149,7 @@ qws.on('message', async (ws, data) => {
     
     ws.incomingMessageList = {} // 主要作用是可以随时暂停任务, 保存正在下载状态的https incomingMessage
     ws.downloadTasksList = createProxy(ws, uk)// Proxy 保存未开始的任务,下载完一个删除一个
+    ws.writeStreamList = {}
   }
   
   console.log(`客户端 ${ws.uk} 发来一条消息,类型:${type}`, JSON.parse(data))
@@ -258,12 +266,12 @@ qws.on('message', async (ws, data) => {
   // 客户端退出,保存下载进度
   ws.on('close', () => {
     console.log(`客户端 ${ws.uk} 退出`)
+    ws.online = false // 客户端退出需要打上标记,有些请求进行到第一步时incomingMessageList还没有response所以需要利用online标识来拦截
     Object.values(ws.incomingMessageList).forEach(response => response.destroy()) // 销毁所有下载请求
+    Object.values(ws.writeStreamList).forEach(writeStream => writeStream.close()) // 销毁所有写入流,暂停写入
     const undoneList = Object.values(ws.downloadTasksList).filter(task => task.status === 'run') // 只保留下载中的任务
     undoneList.forEach(task => {
-      const fullPath = path.join(ws.pathDownload, task.path)
-      const fileStat = fs.statSync(fullPath)
-      if (fileStat) task.curFileSize = fileStat.size // 得到当前文件大小
+      task.curFileSize = ws.writeStreamList[task.fsid]?.bytesWritten ?? 0
       task.progress = (task.curFileSize / task.total * 100).toFixed(2) // 计算百分比
       task.status = 'pause' // 回复暂停状态
     })

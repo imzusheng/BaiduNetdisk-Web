@@ -63,10 +63,15 @@ const writeDownload = async (uk, taskInfo) => {
   const fullPath = path.join(userPath, filePath) // 完整路径(包含文件名)
   return new Promise(resolve => {
     const writeStream = fs.createWriteStream(fullPath, {
-      flags: 'a+',
-      autoClose: true
+      flags: 'a+'
     })
-    resolve(writeStream)
+    writeStream.once('ready', () => resolve(writeStream))
+    writeStream.once('end', () => {
+      console.log('写入流 end')
+    })
+    writeStream.once('close', () => {
+      console.log('写入流 close')
+    })
   })
 }
 
@@ -168,8 +173,7 @@ const listLocalFiles = uk => {
 /**
  *
  * @param uk 网盘用户ID
- * @param fsid 文件唯一ID
- * @param filename 文件名
+ * @param filePath
  * @return {number|null} number为Range
  */
 const getFileRange = (uk, filePath) => {
