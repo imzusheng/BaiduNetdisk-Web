@@ -92,16 +92,22 @@ const itemClick = itemData => {
 // 取消下载
 const cancelDownload = itemData => {
   if (itemData) {
-    const rawData = toRaw(itemData)
+    const {fsid, path} = toRaw(itemData)
     store.dispatch('deleteDownload', [{
-      fsid: rawData.fsid,
-      filename: itemData.filename
+      fsid,
+      path
     }]).then(() => {
       store.dispatch('getUndoneList')
       store.dispatch('getLocalFiles')
     })
-  } else { // 删除全部任务 TODO 删除下载中的任务还需要删除文件, 当前方法不可用
-    store.dispatch('deleteDownload', Object.values(toRaw(data.value))).then(() => {
+  } else { // 删除全部任务
+    const filePathList = Object.values(toRaw(data.value)).map(v => {
+      return {
+        path: v.path,
+        fsid: v.fsid
+      }
+    })
+    store.dispatch('deleteDownload', filePathList).then(() => {
       store.dispatch('getUndoneList')
       store.dispatch('getLocalFiles')
     })

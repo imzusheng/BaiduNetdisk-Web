@@ -207,11 +207,11 @@ export default class API {
   }
   
   // 取消任务
-  deleteDownload = list => {
+  deleteDownload = filePathList => {
     return new Promise(resolve => {
       axiosTools.proxy('/deleteDownload', {
         params: {
-          list,
+          list: filePathList,
           cross: true
         }
       }).then(res => resolve(res))
@@ -230,11 +230,11 @@ export default class API {
   }
   
   // 删除本地文件
-  deleteFiles = filenameList => {
+  deleteFiles = filePathList => {
     return new Promise(resolve => {
       axiosTools.proxy('/deleteFiles', {
         params: {
-          filenameList,
+          filePathList,
           cross: true
         }
       }).then(res => resolve(res))

@@ -130,8 +130,8 @@ routerApi.get('/openExplorer', async (req, res) => {
 
 // 删除本地文件
 routerApi.get('/deleteFiles', async (req, res) => {
-  const filenames = req.query.filenameList
-  const result = deleteFiles(filenames)
+  const filePathList = req.query.filePathList
+  const result = deleteFiles(filePathList)
   res.send(result)
 })
 

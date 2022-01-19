@@ -76,36 +76,6 @@ const mkdirMultiple = async filepath => {
 }
 
 /**
- * 转换文件名, 写入的文件名加入了_fsid_需要去除
- * @param filename 文件名
- * @param fsid 文件ID
- * @param type input为写入，加入fsid/ output为读取，去除fsid
- */
-function filenameHandle(filename, fsid, type) {
-  // 取文件后缀名
-  const fileExt = path.extname(filename)
-  if (type === 'input') {
-    // 将文件fsid加入到文件名后缀前
-    const newFilename = filename.replace(new RegExp(`${fileExt}$`), `_fsid_${fsid + '' + fileExt}`)
-    return {
-      filename: newFilename
-    }
-  } else if (type === 'output') {
-    // 取fsid， 处理后格式_fsid_123456
-    const fsidExt = filename.substring(filename.lastIndexOf('_fsid_'), filename.lastIndexOf(fileExt))
-    // 源文件名，只要替换掉_fsid_123456部分
-    const rawFilename = filename.replace(fsidExt, '')
-    // fsid，去除字符串"_fsid_"
-    const fsid = fsidExt.replace('_fsid_', '')
-    return {
-      filename: rawFilename,
-      fsid,
-      fileExt
-    }
-  }
-}
-
-/**
  * 列出本地下载目录的文件
  * @param uk 用户ID
  * @return {Promise<array>} 返回目录中所有文件信息
@@ -146,8 +116,6 @@ const listLocalFiles = async uk => {
     })
   }
   
-  console.log(fileInfoList)
-  
   return fileInfoList
 }
 
@@ -185,17 +153,17 @@ const openExplorer = async (uk, filePath, isDir) => {
 
 /**
  * 同步删除文件
- * @param uk 用户ID
- * @param {array} filenames 文件名数组
  * @return {boolean} true 删除成功
+ * @param filePathList
  */
-const deleteFiles = (filenames) => {
-  for (let i = 0; i < filenames.length; i++) {
-    const filename = filenames[i]
-    if (filename) {
-      const exist = isExist(filename)
+const deleteFiles = (filePathList) => {
+  for (let i = 0; i < filePathList.length; i++) {
+    const filePath = filePathList[i]
+    console.log(filePath)
+    if (filePath) {
+      const exist = isExist(filePath)
       // 文件存在， 删除
-      if (exist) fs.rmSync(filename)
+      if (exist) fs.rmSync(filePath)
     }
   }
   return true
@@ -225,30 +193,30 @@ const handleRecordTasks = async (taskInfo, uk, type) => {
 
 // 删除下载任务
 const deleteDownload = (uk, files) => {
+  const filesParse = files.map(v => typeof v === 'string' ? JSON.parse(v) : v)
+  // 删除文件本身
+  const filePathList = filesParse.map(fileInfo => path.join(path.resolve(), `download/${uk}/`, fileInfo.path))
+  deleteFiles(filePathList)
   return new Promise(resolve => {
-    const filePath = path.join(__dirname, './unDoneList.json')
-    const exist = isExist(filePath)
-    let jsonData
-    if (exist) {
-      jsonData = require('./unDoneList.json')
-      const deleteFileArr = []
-      files.forEach(fileInfo => {
-        const fileInfoObj = JSON.parse(fileInfo)
-        delete jsonData[fileInfoObj.fsid]
-        const {filename} = filenameHandle(fileInfoObj.filename, fileInfoObj.fsid, 'input')
-        console.log(fileInfoObj.fsid, filename)
-        deleteFileArr.push(filename)
+    // tasks_uk.json文件的路径
+    const taskFilePath = taskFilename(uk)
+    let jsonData = {}
+    if (isExist(taskFilePath)) { // tasks_uk.json文件存在, 这里只是删除json的待下载文件信息
+      jsonData = toolsReadFile(taskFilePath)
+      filesParse.forEach(fileInfo => {
+        delete jsonData[fileInfo.fsid]
       })
-      deleteFiles(uk, deleteFileArr)
+      // 写入回去
+      fs.writeFile(taskFilePath, JSON.stringify(jsonData), 'utf8', err => {
+        if (err) {
+          console.log(err)
+          resolve(false)
+        }
+        resolve(true)
+      })
+    } else {
+      resolve(false)
     }
-    
-    fs.writeFile(filePath, JSON.stringify(jsonData), 'utf8', err => {
-      if (err) {
-        console.log(err)
-        resolve(false)
-      }
-      resolve(true)
-    })
   })
 }
 

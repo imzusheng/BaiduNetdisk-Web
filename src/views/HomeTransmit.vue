@@ -150,9 +150,9 @@ const handleSelectionChange = e => {
 // 删除下载文件夹中的文件
 const deleteFiles = () => {
   // 取文件根路径
-  const filenameList = toRaw(selectFiles).map(v => v.path)
+  const filePathList = toRaw(selectFiles).map(v => v.path)
   // 删除文件,删除完成后重新获取目录
-  store.dispatch('deleteFiles', filenameList).then(() => {
+  store.dispatch('deleteFiles', filePathList).then(() => {
     store.dispatch('getLocalFiles') // 删除完成后刷新本地文件列表
   })
 }

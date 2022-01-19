@@ -125,9 +125,9 @@ export const store = createStore({
       api.getQuota().then(res => commit('setQuotaInfo', res))
     },
     // 删除下载文件夹中的文件
-    deleteFiles(context, filenameList) {
+    deleteFiles(context, filePathList) {
       return new Promise(resolve => {
-        api.deleteFiles(filenameList).then(res => {
+        api.deleteFiles(filePathList).then(res => {
           ElMessage({
             type: res ? 'success' : 'error',
             message: res ? '删除成功' : '删除失败'
@@ -136,10 +136,10 @@ export const store = createStore({
         })
       })
     },
-    // 删除下载我呢见
-    deleteDownload(context, payload) {
+    // 删除下载中的任务
+    deleteDownload(context, filePathList) {
       return new Promise(resolve => {
-        api.deleteDownload(payload).then(res => {
+        api.deleteDownload(filePathList).then(res => {
           ElMessage({
             type: res ? 'success' : 'error',
             message: res ? '删除成功' : '删除失败'
