@@ -364,7 +364,8 @@ export default class API {
     ws.sendMsg(Object.assign({
       type: 'startDownload',
       uk: JSON.stringify(store.state.userInfo?.uk),
-      accessToken: accessToken.value
+      accessToken: accessToken.value,
+      sum: 3
     }, opt))
   }
 }

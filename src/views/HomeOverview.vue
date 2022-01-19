@@ -37,7 +37,7 @@
         ref="multipleTableRef"
         style="width: 100%"
         @selection-change="handleSelectionChange"
-        @row-click="rowClick"
+        @cell-click="cellClick"
         empty-text="空目录"
     >
       <!-- 多选框 s -->
@@ -88,14 +88,16 @@
 <script setup>
 
 import {useStore} from 'vuex'
-import {api, util} from '@/util'
+import {util} from '@/util'
 import {useRouter} from 'vue-router'
-import {computed, onMounted, reactive, toRaw} from 'vue'
+import {computed, onMounted, reactive, ref, toRaw} from 'vue'
 import {Share, Download, Delete} from '@element-plus/icons-vue'
 import {ElLoading, ElMessage, ElMessageBox} from 'element-plus'
 
 const store = useStore()
 const router = useRouter()
+// 表格ref
+const multipleTableRef = ref(null)
 // icon路径
 const iconPath = computed(() => {
   return function (url) {
@@ -117,14 +119,17 @@ const breadcrumb = computed(() => {
 })
 // 多选数据
 const rowSelection = reactive([])
+
 // 多选回调
 const handleSelectionChange = e => {
   const rawData = e.map(v => toRaw(v))
   rowSelection.length = 0
   rowSelection.push(...rawData)
 }
+
 // 分享
 const toolsShare = () => ElMessage.warning('暂未开放分享功能')
+
 // 删除文件
 const toolsDelete = () => {
   const rawData = toRaw(rowSelection)
@@ -150,6 +155,7 @@ const toolsDelete = () => {
         })
       })
 }
+
 // 批量下载
 const toolsDownload = async () => {
   // 全屏加载动画
@@ -188,11 +194,14 @@ const toolsDownload = async () => {
     })
     files = files.filter(v => v.isdir === 0)
     loadingInstance.close() // 关闭全屏动画
-    // const sum = Object.values(res).reduce((a, b) => a?.cursor ? a.cursor + b.cursor : a + b.cursor, 0) // 总文件数量(废弃，因为把文件夹算了进去)
     ElMessageBox.confirm(
-        `确定要下载这${files.length}个文件或文件夹吗?`,
+        `
+        <p>确定要下载这${files.length + notDir.length}个文件或文件夹吗?</p>
+        <p><small style="color: #999">${files.length > 1000 ? '(文件数大于1000,建议用客户端下载)' : ''}</small></p>
+        `,
         '提示',
         {
+          dangerouslyUseHTMLString: true,
           confirmButtonText: '确定',
           cancelButtonText: '取消',
           type: 'warning',
@@ -200,6 +209,8 @@ const toolsDownload = async () => {
         .then(() => {
           // 将结果中的fsid提取出来
           const fsids = files.map(v => v.fs_id)
+          const notDirFsids = notDir.map(v => v.fs_id)
+          fsids.push(...notDirFsids)
           download(fsids)
         })
         .catch(() => {
@@ -207,6 +218,7 @@ const toolsDownload = async () => {
         })
   })
 }
+
 // 处理批量下载
 function download(fsids) {
   store.dispatch('getFileMeta', fsids).then(res => {
@@ -231,41 +243,56 @@ const clearData = () => {
 }
 
 // 表格行被点击
-const rowClick = e => {
-  const rowData = toRaw(e)
-  // 是否是文件夹 1 是, 0 否
-  const isDir = rowData.isdir
-  if (isDir === 1) {
-    clearData()
-    // 加载状态
-    store.state.fileListLoading = true
-    router.push({
-      query: {
-        path: encodeURIComponent(rowData.path)
-      }
-    })
-  } else {
-    // 下载文件 TODO 有时候会下载一个无名文件d，很奇怪 有时间给服务器搞个日志好了
-    const filenameList = Object.values(toRaw(store.state.download)).map(v => v.filename)
-    const existsFileList = [...toRaw(store.state.listLocalFiles).map(v => v.rawFilename)]
-    if (filenameList.length > 3) {
-      return ElMessage({
-        type: 'info',
-        message: '当前任务数大于3，再等等'
-      })
-    } else if (existsFileList.includes(rowData.server_filename)) {
-      return ElMessage({
-        type: 'info',
-        message: '请勿重复下载'
+// const rowClick = () => {
+  // const rowData = toRaw(e)
+  // // 是否是文件夹 1 是, 0 否
+  // const isDir = rowData.isdir
+  // if (isDir === 1) {
+  //   clearData()
+  //   // 加载状态
+  //   store.state.fileListLoading = true
+  //   router.push({
+  //     query: {
+  //       path: encodeURIComponent(rowData.path)
+  //     }
+  //   })
+  // } else {
+  //   // 下载文件 TODO 有时候会下载一个无名文件d，很奇怪 有时间给服务器搞个日志好了
+  //   const filenameList = Object.values(toRaw(store.state.download)).map(v => v.filename)
+  //   const existsFileList = [...toRaw(store.state.listLocalFiles).map(v => v.rawFilename)]
+  //   if (filenameList.length > 3) {
+  //     return ElMessage({
+  //       type: 'info',
+  //       message: '当前任务数大于3，再等等'
+  //     })
+  //   } else if (existsFileList.includes(rowData.server_filename)) {
+  //     return ElMessage({
+  //       type: 'info',
+  //       message: '请勿重复下载'
+  //     })
+  //   }
+  //   ElMessage({
+  //     type: 'info',
+  //     message: '正在加入下载队列...'
+  //   })
+  //   api.getFileMeta([rowData.fs_id]).then(res => {
+  //     api.getDownload(res.list[0].dlink, res.list[0].filename, rowData.fs_id)
+  //   })
+  // }
+// }
+
+const cellClick = (row, column) => {
+  if (column.property === "server_filename") { // 点击了文件名
+    if (row.isdir === 1) { // 是文件夹
+      clearData()
+      store.state.fileListLoading = true
+      router.push({
+        query: {path: encodeURIComponent(row.path)}
       })
     }
-    ElMessage({
-      type: 'info',
-      message: '正在加入下载队列...'
-    })
-    api.getFileMeta([rowData.fs_id]).then(res => {
-      api.getDownload(res.list[0].dlink, res.list[0].filename, rowData.fs_id)
-    })
+  } else {
+    multipleTableRef.value.toggleRowSelection(row, undefined) // 若设置true/false则直接设置选中状态
+    rowSelection.push(row)
   }
 }
 
@@ -334,7 +361,6 @@ onMounted(() => {
 
       // 表格
       .home-main-table {
-        cursor: pointer;
         flex: 1;
 
         .el-table__inner-wrapper {
@@ -346,8 +372,21 @@ onMounted(() => {
             height: 100%;
             overflow-y: auto;
 
+            .el-table__row {
+              > .el-table__cell:nth-of-type(2) {
+                cursor: pointer !important; // 文件名那列
+              }
+            }
+
             .el-table__cell {
               color: #999;
+
+              &:hover {
+
+                .home-main-filename { // 鼠标放在单元格上文件名变色
+                  color: #409eff !important;
+                }
+              }
 
               .cell {
                 > span {
@@ -370,10 +409,6 @@ onMounted(() => {
                   -webkit-box-orient: vertical;
                   -webkit-line-clamp: 1;
                   color: #141414;
-
-                  &:hover {
-                    color: #409eff;
-                  }
                 }
               }
             }
