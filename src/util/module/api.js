@@ -25,10 +25,11 @@ export default class API {
       
       if (dataToJson.type === 'end') { // 确认收到结束标记
         delete state.download[dataToJson.fsid]  // 下载列表删除该任务
-        ElMessage({
-          type: "success",
-          message: `${dataToJson.filename} 下载成功`
-        })
+        // 下载任务太快时,弹出会卡顿
+        // ElMessage({
+        //   type: "success",
+        //   message: `${dataToJson.filename} 下载成功`
+        // })
         store.dispatch('getLocalFiles')
       } else if (dataToJson.type === 'pause') { // 暂停标记
         ElMessage({
@@ -40,6 +41,7 @@ export default class API {
         //   status: 'pause'
         // })
       } else if (dataToJson.type === 'chunk') { // 下载中
+        // TODO 服务器回传进度时节流
         state.download[dataToJson.fsid] = dataToJson
       } else {
         console.log(dataToJson)
