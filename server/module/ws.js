@@ -34,7 +34,7 @@ function createProxy(ws, uk) {
 // 处理下载一个任务的请求
 function downloadOnce(ws, uk, taskInfo) {
   ws.downloadTasksList[taskInfo.fsid].status = 'run' // 已经开始的任务做一个标记,(方便在deleteProperty中识别)以免重复下载
-  getFirstStep(taskInfo.dlink).then(url => {
+  getFirstStep(ws, taskInfo.dlink).then(url => {
     getSecondStep(ws, url, taskInfo)
   })
 }
@@ -42,16 +42,14 @@ function downloadOnce(ws, uk, taskInfo) {
 /**
  * 第一步get请求,重定向
  * 成功返回下载链接
+ * @param ws
  * @param dlink
  * @return {Promise<url|null>}
  */
-function getFirstStep(dlink) {
+function getFirstStep(ws, dlink) {
   return new Promise(resolve => {
-    https.get(dlink, {
-      headers: {
-        'Host': 'pcs.baidu.com',
-        'User-Agent': 'pan.baidu.com'
-      }
+    https.get(dlink + `&access_token=${ws.access_token}`, {
+      headers: {'User-Agent': 'pan.baidu.com'}
     }, dlinkRes => {
       let str = ''
       dlinkRes.on('data', res => str += res)
@@ -79,17 +77,23 @@ function getSecondStep(ws, url, taskInfo) {
   
   const range = getFileRange(uk, filePath) || 0 // 下载起始位置
   
-  console.log(filePath, range)
-  
   // 对重定向链接发起下载请求
-  https.get(url, {headers: {Range: `bytes=${range}-`}}, async response => {
+  https.get(url + `&access_token=${ws.access_token}`, {
+    headers: {
+      'User-Agent': 'pan.baidu.com',
+      'Range': `bytes=${range}-`
+    },
+  }, async response => {
     
     const wd = await writeDownload(uk, taskInfo) // 打开写入流
     let curFileSize = range // 当前下载的大小
     incomingMessageList[fsid] = response
     
+    let str = ''
+    
     // 收到数据块
     response.on('data', chunk => {
+      str += chunk
       wd.write(chunk) // 开始写入  如果需要直接转发资源，使用Buffer.from(chunk).buffer转换为ArrayBuffer
       curFileSize += chunk.length // 记录当前数据大小，用来计算下载进度
       const progressInfo = { // 回传当前的下载进度到前端
@@ -106,6 +110,9 @@ function getSecondStep(ws, url, taskInfo) {
     
     // 下载结束标记
     response.on('end', () => {
+      if (str.length < 2048) {
+        console.log(str, url)
+      }
       handleRecordTasks({fsid}, uk, 'delete')
       delete incomingMessageList[fsid] // 删除下载队列信息.1
       delete downloadTasksList[fsid] // 删除下载队列信息.2
@@ -114,7 +121,6 @@ function getSecondStep(ws, url, taskInfo) {
         filename,
         type: 'end'
       }))
-      wd.close() // fs.WriteStream.close 一般来说会自动关闭
     })
     
   })
@@ -125,10 +131,12 @@ qws.on('message', async (ws, data) => {
     uk,           // 百度网盘用户ID
     type,         // 请求类型
     sum = 2,      // 并行下载数量
+    accessToken   // 令牌
   } = JSON.parse(data)
   
-  if (!ws?.uk) { // 这个客户端第一次发消息过来,欢迎一下
+  if (!ws?.uk || !ws.access_token) { // 这个客户端第一次发消息过来,欢迎一下
     ws.uk = uk
+    ws.access_token = accessToken
     ws.pathDownload = path.join(path.resolve(), `download/${uk}`) // 客户端的专属下载路径
     ws.pathRecords = path.join(path.resolve(), `download/tasks_${uk}.json`) // 客户端记录下载任务的json文件路径
     

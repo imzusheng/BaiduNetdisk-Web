@@ -61,7 +61,6 @@ const writeDownload = async (uk, taskInfo) => {
   // 文件路径是否存在，不存在则创建
   if (!isExist(noFilenamePath)) await mkdirMultiple(noFilenamePath)
   const fullPath = path.join(userPath, filePath) // 完整路径(包含文件名)
-  console.log(fullPath)
   return new Promise(resolve => {
     const writeStream = fs.createWriteStream(fullPath, {
       flags: 'a+',
