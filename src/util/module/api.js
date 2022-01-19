@@ -24,16 +24,14 @@ export default class API {
     // ws消息监听
     ws.on('message', res => {
       const dataToJson = JSON.parse(res.data)
-  
-      // console.log(dataToJson.filename, dataToJson.progress)
       
       if (dataToJson.type === 'end') { // 确认收到结束标记
-        // 下载列表删除该任务
-        delete state.download[dataToJson.fsid]
+        delete state.download[dataToJson.fsid]  // 下载列表删除该任务
         ElMessage({
           type: "success",
           message: `${dataToJson.filename} 下载成功`
         })
+        store.dispatch('getLocalFiles')
       } else if (dataToJson.type === 'pause') { // 暂停标记
         ElMessage({
           type: "warning",
