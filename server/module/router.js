@@ -130,9 +130,8 @@ routerApi.get('/openExplorer', async (req, res) => {
 
 // 删除本地文件
 routerApi.get('/deleteFiles', async (req, res) => {
-  const filenames = req.query.args
-  const uk = req.headers?.useruk
-  const result = deleteFiles(uk, filenames)
+  const filenames = req.query.filenameList
+  const result = deleteFiles(filenames)
   res.send(result)
 })
 
@@ -165,6 +164,7 @@ routerApi.get('/proxy', async (req, res) => {
   
   res.send(result)
 })
+
 // 记录下载任务
 routerApi.post('/recordTasks', async (req, res) => {
   await handleRecordTasks(req.body.list, req.headers?.useruk, 'write')

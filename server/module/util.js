@@ -25,32 +25,6 @@ const isExist = path => {
 
 /**
  * @param uk 用户ID
- * @param filename 传入文件名
- * @param fsid 文件唯一ID 加入到文件名
- * @return {Promise<WriteStream>}
- */
-const writeFile = async (uk, filename, fsid) => {
-  const filepath = path.join(__dirname, `../download/${uk}`)
-  // 处理文件名
-  const {filename: newFilename} = filenameHandle(filename, fsid.toString(), 'input')
-  // 完整路径
-  const fullPath = path.join(filepath, newFilename)
-  // 文件是否存在
-  const exist = isExist(filepath)
-  console.log(filepath, fullPath)
-  // 不存在则创建
-  if (!exist) await mkdirMultiple(filepath)
-  return new Promise(resolve => {
-    const writeStream = fs.createWriteStream(fullPath, {
-      flags: 'a+',
-      autoClose: true
-    })
-    resolve(writeStream)
-  })
-}
-
-/**
- * @param uk 用户ID
  * @param taskInfo 下载任务的信息
  * @return {Promise<WriteStream>}
  */
@@ -142,12 +116,16 @@ const listLocalFiles = uk => {
   
   // 列出目录中所有文件名(深度遍历)
   function listFilesInfo(filepath) {
-    const fileList = fs.readdirSync(filepath) // 获取目录下所有文件或文件夹名字
+    // 获取目录下所有文件或文件夹名字
+    const fileList = fs.readdirSync(filepath)
     fileList.forEach(filename => { // 根据文件名查询文件信息
-      if (!isExist(path.join(filepath, filename))) return // 确保文件存在
-      const fullPath = path.join(filepath, filename) // 文件所在完整路径(包含文件名或文件夹名)
-      const fileStat = fs.statSync(fullPath) // 查询文件信息
-      if (fileStat.isDirectory()) { // 文件名是目录时
+      // 确保文件存在
+      if (!isExist(path.join(filepath, filename))) return
+      // 文件所在完整路径(包含文件名或文件夹名)
+      const fullPath = path.join(filepath, filename)
+      // 查询文件信息
+      const fileStat = fs.statSync(fullPath)
+      if (fileStat.isDirectory()) { // 文件名是目录时,继续遍历
         listFilesInfo(fullPath)
       } else {
         const {size, birthtimeMs} = fileStat
@@ -155,6 +133,7 @@ const listLocalFiles = uk => {
         fileInfoList.push({
           size,
           filename,
+          path: fullPath,
           ext: fileExt,
           birthtimeMs: birthtimeMs.toFixed(0)
         })
@@ -210,42 +189,16 @@ const openExplorer = async (uk, filename) => {
  * @param {array} filenames 文件名数组
  * @return {boolean} true 删除成功
  */
-const deleteFiles = (uk, filenames) => {
-  console.log(filenames)
+const deleteFiles = (filenames) => {
   for (let i = 0; i < filenames.length; i++) {
     const filename = filenames[i]
     if (filename) {
-      const filePath = path.join(__dirname, `../download/${uk}/` + filename)
-      console.log(filePath)
-      const exist = isExist(filePath)
+      const exist = isExist(filename)
       // 文件存在， 删除
-      if (exist) fs.rmSync(filePath)
+      if (exist) fs.rmSync(filename)
     }
   }
   return true
-}
-
-/**
- * 写入下载中断文件
- * @param data 文件信息
- */
-const writeLogFile = data => {
-  const filePath = path.join(__dirname, './unDoneList.json')
-  // 是否存在json文件
-  const exist = isExist(filePath)
-  let jsonData
-  if (exist) { // 存在则引入
-    jsonData = require('./unDoneList.json')
-    Object.values(data).forEach(v => {
-      jsonData[v.fsid] = v
-    })
-  } else {
-    jsonData = data
-  }
-  
-  fs.writeFile(filePath, JSON.stringify(jsonData), 'utf8', err => {
-    if (err) console.log(err)
-  })
 }
 
 /**
@@ -268,21 +221,6 @@ const handleRecordTasks = async (taskInfo, uk, type) => {
   }
   
   fs.writeFileSync(filePath, JSON.stringify(jsonData), {flag: 'w+', encoding: 'utf-8'})
-}
-
-// 下载完成删掉
-const deleteLogFile = fsid => {
-  const filePath = path.join(__dirname, './unDoneList.json')
-  const exist = isExist(filePath)
-  let jsonData
-  if (exist) {
-    jsonData = require('./unDoneList.json')
-    delete jsonData[fsid]
-  }
-  
-  fs.writeFile(filePath, JSON.stringify(jsonData), 'utf8', err => {
-    if (err) console.log(err)
-  })
 }
 
 // 删除下载任务
@@ -326,17 +264,14 @@ const toolsReadFile = filePath => {
 }
 
 module.exports = {
-  toolsReadFile,
-  taskFilename,
-  writeFile,
   isExist,
-  listLocalFiles,
-  openExplorer,
   deleteFiles,
-  writeLogFile,
   getFileRange,
-  deleteLogFile,
+  taskFilename,
+  openExplorer,
+  toolsReadFile,
+  writeDownload,
+  listLocalFiles,
   deleteDownload,
   handleRecordTasks,
-  writeDownload
 }

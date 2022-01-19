@@ -230,11 +230,11 @@ export default class API {
   }
   
   // 删除本地文件
-  deleteFiles = args => {
+  deleteFiles = filenameList => {
     return new Promise(resolve => {
       axiosTools.proxy('/deleteFiles', {
         params: {
-          args,
+          filenameList,
           cross: true
         }
       }).then(res => resolve(res))

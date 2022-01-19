@@ -141,13 +141,13 @@ const handleSelectionChange = e => {
   Object.assign(selectFiles, data)
 }
 
-// 删除下载文件夹中的文件 TODO 删除文件只能删除根目录的文件,删除全部文件不可用状态
+// 删除下载文件夹中的文件
 const deleteFiles = () => {
-  const filenameList = toRaw(selectFiles).map(v => v.filename)
-  // filenameList 形如 ['speed_fsid_647011955332675.png']
+  // 取文件根路径
+  const filenameList = toRaw(selectFiles).map(v => v.path)
+  // 删除文件,删除完成后重新获取目录
   store.dispatch('deleteFiles', filenameList).then(() => {
-    // 删除完成后刷新本地文件列表
-    store.dispatch('getLocalFiles')
+    store.dispatch('getLocalFiles') // 删除完成后刷新本地文件列表
   })
 }
 

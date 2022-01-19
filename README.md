@@ -33,3 +33,8 @@ nodemon index 或 node index
 
 5. 本地下载文件夹
 ![主页](https://demo.zusheng.club/README/bd_local.png)
+
+### 功能
+多任务同时下载(不限制数量)且支持断点续传
+离线下载
+文件管理

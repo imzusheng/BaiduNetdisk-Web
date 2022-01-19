@@ -242,45 +242,45 @@ const clearData = () => {
 
 // 表格行被点击
 // const rowClick = () => {
-  // const rowData = toRaw(e)
-  // // 是否是文件夹 1 是, 0 否
-  // const isDir = rowData.isdir
-  // if (isDir === 1) {
-  //   clearData()
-  //   // 加载状态
-  //   store.state.fileListLoading = true
-  //   router.push({
-  //     query: {
-  //       path: encodeURIComponent(rowData.path)
-  //     }
-  //   })
-  // } else {
-  //   // 下载文件 TODO 有时候会下载一个无名文件d，很奇怪 有时间给服务器搞个日志好了
-  //   const filenameList = Object.values(toRaw(store.state.download)).map(v => v.filename)
-  //   const existsFileList = [...toRaw(store.state.listLocalFiles).map(v => v.rawFilename)]
-  //   if (filenameList.length > 3) {
-  //     return ElMessage({
-  //       type: 'info',
-  //       message: '当前任务数大于3，再等等'
-  //     })
-  //   } else if (existsFileList.includes(rowData.server_filename)) {
-  //     return ElMessage({
-  //       type: 'info',
-  //       message: '请勿重复下载'
-  //     })
-  //   }
-  //   ElMessage({
-  //     type: 'info',
-  //     message: '正在加入下载队列...'
-  //   })
-  //   api.getFileMeta([rowData.fs_id]).then(res => {
-  //     api.getDownload(res.list[0].dlink, res.list[0].filename, rowData.fs_id)
-  //   })
-  // }
+// const rowData = toRaw(e)
+// // 是否是文件夹 1 是, 0 否
+// const isDir = rowData.isdir
+// if (isDir === 1) {
+//   clearData()
+//   // 加载状态
+//   store.state.fileListLoading = true
+//   router.push({
+//     query: {
+//       path: encodeURIComponent(rowData.path)
+//     }
+//   })
+// } else {
+//   // 下载文件 TODO 有时候会下载一个无名文件d，很奇怪 有时间给服务器搞个日志好了
+//   const filenameList = Object.values(toRaw(store.state.download)).map(v => v.filename)
+//   const existsFileList = [...toRaw(store.state.listLocalFiles).map(v => v.rawFilename)]
+//   if (filenameList.length > 3) {
+//     return ElMessage({
+//       type: 'info',
+//       message: '当前任务数大于3，再等等'
+//     })
+//   } else if (existsFileList.includes(rowData.server_filename)) {
+//     return ElMessage({
+//       type: 'info',
+//       message: '请勿重复下载'
+//     })
+//   }
+//   ElMessage({
+//     type: 'info',
+//     message: '正在加入下载队列...'
+//   })
+//   api.getFileMeta([rowData.fs_id]).then(res => {
+//     api.getDownload(res.list[0].dlink, res.list[0].filename, rowData.fs_id)
+//   })
+// }
 // }
 
-const cellClick = (row, column) => {
-  if (column.property === "server_filename") { // 点击了文件名
+const cellClick = (row, column, cell, event) => {
+  if (Array.from(event.target.classList).includes('home-main-filename')) { // 点击了文件名
     if (row.isdir === 1) { // 是文件夹
       clearData()
       store.state.fileListLoading = true
@@ -379,13 +379,6 @@ onMounted(() => {
             .el-table__cell {
               color: #999;
 
-              &:hover {
-
-                .home-main-filename { // 鼠标放在单元格上文件名变色
-                  color: #409eff !important;
-                }
-              }
-
               .cell {
                 > span {
                   display: flex;
@@ -407,6 +400,10 @@ onMounted(() => {
                   -webkit-box-orient: vertical;
                   -webkit-line-clamp: 1;
                   color: #141414;
+
+                  &:hover {
+                    color: #409eff !important;
+                  }
                 }
               }
             }

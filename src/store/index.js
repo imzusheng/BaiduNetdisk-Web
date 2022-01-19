@@ -68,7 +68,6 @@ export const store = createStore({
     },
     // 更改已下载的页面数据
     setLocalFiles(state, payload) {
-      // state.listLocalFiles.length = 0
       state.listLocalFiles = payload
     },
     // 剩余容量等配额
@@ -126,9 +125,9 @@ export const store = createStore({
       api.getQuota().then(res => commit('setQuotaInfo', res))
     },
     // 删除下载文件夹中的文件
-    deleteFiles(context, payload) {
+    deleteFiles(context, filenameList) {
       return new Promise(resolve => {
-        api.deleteFiles(payload).then(res => {
+        api.deleteFiles(filenameList).then(res => {
           ElMessage({
             type: res ? 'success' : 'error',
             message: res ? '删除成功' : '删除失败'
