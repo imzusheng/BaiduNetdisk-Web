@@ -83,9 +83,8 @@ function getSecondStep(ws, url, taskInfo) {
     
     // 收到数据块
     response.on('data', chunk => {
-      if (!ws.online) {
-        wd.end()
-        response.destroy()
+      if (!ws.online) { // 反应到客户端已经关闭
+        wsClientClose(ws)
         return
       }
       wd.write(chunk) // 开始写入  如果需要直接转发资源，使用Buffer.from(chunk).buffer转换为ArrayBuffer
@@ -123,7 +122,7 @@ function downloadOnce(ws, uk, taskInfo) {
   ws.downloadTasksList[taskInfo.fsid].status = 'run' // 已经开始的任务做一个标记,(方便在deleteProperty中识别)以免重复下载
   try {
     getFirstStep(ws, taskInfo.dlink).then(url => {
-      if (ws.online) getSecondStep(ws, url, taskInfo)
+      getSecondStep(ws, url, taskInfo)
     })
   } catch (e) {
     console.log(e)
@@ -265,16 +264,23 @@ qws.on('message', async (ws, data) => {
   
   // 客户端退出,保存下载进度
   ws.on('close', () => {
+    ws.online = false // 客户端退出需要打上标记,在getSecondStep中拦截
     console.log(`客户端 ${ws.uk} 退出`)
-    ws.online = false // 客户端退出需要打上标记,有些请求进行到第一步时incomingMessageList还没有response所以需要利用online标识来拦截
-    Object.values(ws.incomingMessageList).forEach(response => response.destroy()) // 销毁所有下载请求
-    Object.values(ws.writeStreamList).forEach(writeStream => writeStream.close()) // 销毁所有写入流,暂停写入
-    const undoneList = Object.values(ws.downloadTasksList).filter(task => task.status === 'run') // 只保留下载中的任务
-    undoneList.forEach(task => {
-      task.curFileSize = ws.writeStreamList[task.fsid]?.bytesWritten ?? 0
-      task.progress = (task.curFileSize / task.total * 100).toFixed(2) // 计算百分比
-      task.status = 'pause' // 回复暂停状态
-    })
-    handleRecordTasks(undoneList, ws.uk, 'write')
   })
 })
+
+// 客户端关闭操作
+function wsClientClose(ws) {
+  Object.values(ws.incomingMessageList).forEach(response => response.destroy()) // 销毁所有下载请求
+  Object.values(ws.writeStreamList).forEach(writeStream => writeStream.close()) // 销毁所有写入流,暂停写入
+  const undoneList = Object
+      .values(ws.downloadTasksList)
+      .filter(task => task.status === 'run') // 只保留下载中的任务
+      .map(task => {
+        task.curFileSize = ws.writeStreamList[task.fsid]?.bytesWritten ?? 0
+        task.progress = (task.curFileSize / task.total * 100).toFixed(2) // 计算百分比
+        task.status = 'pause' // 回复暂停状态
+        return task
+      })
+  handleRecordTasks(undoneList, ws.uk, 'write').then()
+}
