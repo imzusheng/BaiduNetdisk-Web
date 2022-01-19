@@ -141,12 +141,13 @@ const getFileRange = (uk, filePath) => {
  * @return {Promise<void>}
  */
 const openExplorer = async (uk, filePath, isDir) => {
+  const tFilePath = filePath ? filePath : userDownloadPath(uk)
   let command
   if (isDir) {
-    command = `explorer.exe /select,"${filePath}"`
+    command = `explorer.exe /select,"${tFilePath}"`
   } else {
-    if (!isExist(filePath)) await mkdirMultiple(filePath)
-    command = `explorer.exe "${filePath}"`
+    if (!isExist(tFilePath)) await mkdirMultiple(tFilePath)
+    command = `explorer.exe "${tFilePath}"`
   }
   exec(command)
 }

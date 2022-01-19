@@ -11,7 +11,7 @@
       <!--  下拉菜单 s  -->
       <div style="display: flex; justify-content: center; align-items: center">
         <el-button-group>
-          <el-button type="default" :icon="FolderOpened" @click="api.openExplorer('')">打开文件夹</el-button>
+          <el-button type="default" :icon="FolderOpened" @click="openRootExplorer">打开文件夹</el-button>
           <el-button type="default" :icon="RefreshLeft" @click="store.dispatch('getLocalFiles')">刷新</el-button>
         </el-button-group>
         <el-button style="margin-left: 8px" type="danger" :icon="FolderDelete" v-if="deleteBtn" @click="deleteFiles">
@@ -160,6 +160,15 @@ const deleteFiles = () => {
 // 双击打开文件夹
 const dblclick = path => {
   api.openExplorer(path, false)
+  ElMessage({
+    message: '正在打开文件夹，请稍后..',
+    type: 'success',
+  })
+}
+
+// 打开用户下载根目录
+const openRootExplorer = () => {
+  api.openExplorer('', true)
   ElMessage({
     message: '正在打开文件夹，请稍后..',
     type: 'success',
