@@ -6,8 +6,8 @@
       <!--  多选按钮管理  -->
       <div>
         <el-button-group>
-          <el-button type="primary" :icon="Close" @click="cancelDownload(null)" plain round>删除所有任务</el-button>
-          <el-button type="primary" :icon="Download" @click="startDownload" round>开始所有任务</el-button>
+          <el-button type="primary" :icon="Download" @click="startDownload" round><b>开始所有任务</b></el-button>
+          <el-button type="primary" :icon="Close" @click="cancelDownload(null)" plain round><b>删除所有任务</b></el-button>
         </el-button-group>
       </div>
 
@@ -42,11 +42,11 @@
           <div class="list-item-info">
             <span class="info-name">{{ item.filename }}</span>
             <span class="info-connect" v-if="item?.status === 'pending'">
-              {{ item.connect }}
-            </span>
+                  {{ item.connect }}
+                </span>
             <span class="info-progress" v-else>
-              {{ util.formatFileSize(item.curFileSize) }}/{{ util.formatFileSize(item.total) }}
-            </span>
+                  {{ util.formatFileSize(item.curFileSize) }}/{{ util.formatFileSize(item.total) }}
+                </span>
           </div>
         </div>
 
@@ -69,8 +69,20 @@ import {util, api} from '@/util'
 import {InfoFilled, Close, DeleteFilled, Download} from "@element-plus/icons-vue"
 
 const store = useStore()
+
 // 未完成的任务列表数据
-const data = computed(() => store.state.download)
+const data = computed(() => {
+  // const dataList = Object.values(store.state.download).sort((a, b) => {
+  //   return parseInt(a.curFileSize) < parseInt(b.curFileSize) ? 1 : -1
+  // })
+  // const dataObj = {}
+  // dataList.forEach(value => {
+  //   dataObj[value.fsid] = value
+  // })
+  // return dataObj
+  return store.state.download
+})
+
 // 点击其中一个任务
 const itemClick = itemData => {
   const rawData = toRaw(itemData)
@@ -89,7 +101,8 @@ const itemClick = itemData => {
   }
   store.state.download[rawData.fsid].status = 'pending' // 在点击第一次后设置状态为pending，防止在收到服务器响应前重复点击，造成错误
 }
-// 取消下载
+
+// 取消下载 TODO 取消所有任务需要换个策略,不需要发送路径,只要把json内的curFileSize不为0且不等于total的说明正在下载中
 const cancelDownload = itemData => {
   if (itemData) {
     const {fsid, path} = toRaw(itemData)

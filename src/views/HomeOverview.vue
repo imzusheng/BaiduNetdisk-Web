@@ -10,8 +10,8 @@
       <!--  功能按钮 s  -->
       <div class="home-main-btn">
         <el-button-group>
-          <el-button type="primary" :icon="Share" round><b>上传</b></el-button>
-          <el-button type="primary" :icon="Share" plain round><b>新建文件夹</b></el-button>
+          <el-button type="primary" :icon="Share" round @click="upload"><b>上传</b></el-button>
+          <el-button type="primary" :icon="Share" plain round @click="mkdir"><b>新建文件夹</b></el-button>
         </el-button-group>
         <el-button-group v-if="rowSelection.length > 0" style="margin-left: 12px">
           <el-button type="primary" :icon="Share" plain round @click="toolsShare"><b>分享</b></el-button>
@@ -96,6 +96,7 @@ import {ElLoading, ElMessage, ElMessageBox} from 'element-plus'
 
 const store = useStore()
 const router = useRouter()
+
 // 表格ref
 const multipleTableRef = ref(null)
 // icon路径
@@ -197,7 +198,7 @@ const toolsDownload = async () => {
     ElMessageBox.confirm(
         `
         <p>确定要下载这${files.length + notDir.length}个文件或文件夹吗?</p>
-        <p><small style="color: #999">${files.length > 1000 ? '(文件数大于1000,建议用客户端下载)' : ''}</small></p>
+        <p><small style="color: #999">${files.length > 500 ? '(文件数大于500.也不是说我不行,但建议用客户端下载.)' : ''}</small></p>
         `,
         '提示',
         {
@@ -221,13 +222,48 @@ const toolsDownload = async () => {
 
 // 处理批量下载
 function download(fsids) {
-  ElMessage.info('正在添加任务到下载列表')
-  store.dispatch('getFileMeta', fsids).then(res => {
-    store.dispatch('postRecordTasks', res.list).then(tasksJson => {
-      store.commit('setUndoneList', tasksJson)
-      ElMessage.success('已添加任务到下载列表')
-      api.wsStartDownload()
-    })
+  const loadingInstance = ElLoading.service({
+    fullscreen: true,
+    text: '正在添加任务到下载列表...'
+  })
+  // 将大于100个元素的数组拆分成100个元素组成的小数组
+  const fsidsQueue = new Array(Math.ceil(fsids.length / 100)) // 创建一个数组,下标是fsids切割的次数(除以100向上取整)
+      .fill('') // 填充为空值
+      .map((value, index) => { // 循环次数就是切割的次数
+        const start = (index * 100) // 起始点
+        const end = (index * 100) + 100 // 结束点
+        return fsids.slice(start, end)
+      })
+
+  // 创建任务队列参数
+  const taskList = fsidsQueue.map((fsidsElement, index) => {
+    const cb = () => {
+      return new Promise(resolve => {
+        store.dispatch('getFileMeta', fsidsElement).then(res => {
+          if (res?.list instanceof Array) {
+            // 添加任务
+            store.dispatch('postRecordTasks', res?.list).then(tasksJson => {
+              store.commit('setUndoneList', tasksJson)
+              resolve()
+            })
+          }
+        })
+      })
+    }
+    return {
+      cb,
+      index
+    }
+  })
+  // 传入任务队列参数,请求执行间隔的时间为0(其实并发都可以吧)
+  const promiseQueue = new util.PromiseQueue(taskList, 0)
+  promiseQueue.getResult().then(() => {
+    loadingInstance.close()
+    ElMessage.success('已添加任务到下载列表')
+    api.wsStartDownload()
+    // 所有请求的response未经处理,都在res里面,需要把他合并成一个数组
+    // const resList = Object.values(res).map(value => value?.list instanceof Array ? value.list : []) // 先取出所有数组到一个数组内
+    // const handledResList = resList.reduce((prev, next) => [...prev, ...next]) // 合并所有小数组到一个数组内
   })
 }
 
@@ -311,6 +347,14 @@ const updateBreadcrumb = index => {
     })
   }
   store.commit('setBreadcrumb')
+}
+
+const upload = () => {
+  ElMessage.warning('暂未开通该功能')
+}
+
+const mkdir = () => {
+  ElMessage.warning('暂未开通该功能')
 }
 
 onMounted(() => {

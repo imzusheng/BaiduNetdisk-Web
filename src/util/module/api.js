@@ -3,8 +3,6 @@
 import {axiosTools, config} from "@/util"
 import {ElMessage} from "element-plus"
 import {computed} from "vue"
-import {util} from "@/util";
-
 let store, state, ws, accessToken
 
 export default class API {
@@ -346,7 +344,6 @@ export default class API {
         fsid: v.fs_id,
         path: v.path,
         status: 'pause',
-        rawFilename: util.filenameHandle(v.filename, v.fs_id, 'input'),
         type: 'chunk',
         total: v.size,
         progress: 0,
