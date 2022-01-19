@@ -100,7 +100,7 @@ const cancelDownload = itemData => {
       store.dispatch('getUndoneList')
       store.dispatch('getLocalFiles')
     })
-  } else { // 删除全部任务
+  } else { // 删除全部任务 TODO 删除下载中的任务还需要删除文件, 当前方法不可用
     store.dispatch('deleteDownload', Object.values(toRaw(data.value))).then(() => {
       store.dispatch('getUndoneList')
       store.dispatch('getLocalFiles')

@@ -168,7 +168,7 @@ routerApi.get('/proxy', async (req, res) => {
 // 记录下载任务
 routerApi.post('/recordTasks', async (req, res) => {
   await handleRecordTasks(req.body.list, req.headers?.useruk, 'write')
-  res.send('success')
+  res.send(toolsReadFile(path.join(path.resolve(), `download/tasks_${req.headers?.useruk}.json`)))
 })
 
 // 封装https发送get请求

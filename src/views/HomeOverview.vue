@@ -88,7 +88,7 @@
 <script setup>
 
 import {useStore} from 'vuex'
-import {util} from '@/util'
+import {api, util} from '@/util'
 import {useRouter} from 'vue-router'
 import {computed, onMounted, reactive, ref, toRaw} from 'vue'
 import {Share, Download, Delete} from '@element-plus/icons-vue'
@@ -221,14 +221,12 @@ const toolsDownload = async () => {
 
 // 处理批量下载
 function download(fsids) {
+  ElMessage.info('正在添加任务到下载列表')
   store.dispatch('getFileMeta', fsids).then(res => {
-    store.dispatch('postRecordTasks', res.list).then((newList) => {
-      const downloadTasks = {}
-      newList.forEach(task => downloadTasks[task.fsid] = task)
-      store.commit('setUndoneList', downloadTasks)
-      console.log(downloadTasks)
-      // api.wsStartDownload()
+    store.dispatch('postRecordTasks', res.list).then(tasksJson => {
+      store.commit('setUndoneList', tasksJson)
       ElMessage.success('已添加任务到下载列表')
+      api.wsStartDownload()
     })
   })
 }

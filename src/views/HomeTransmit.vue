@@ -141,7 +141,7 @@ const handleSelectionChange = e => {
   Object.assign(selectFiles, data)
 }
 
-// 删除下载文件夹中的文件
+// 删除下载文件夹中的文件 TODO 删除文件只能删除根目录的文件,删除全部文件不可用状态
 const deleteFiles = () => {
   const filenameList = toRaw(selectFiles).map(v => v.filename)
   // filenameList 形如 ['speed_fsid_647011955332675.png']

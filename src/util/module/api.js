@@ -355,7 +355,7 @@ export default class API {
     return new Promise(resolve => {
       axiosTools.post('/recordTasks', {
         list: newList
-      }).then(() => resolve(newList))
+      }).then((res) => resolve(res))
     })
   }
   
