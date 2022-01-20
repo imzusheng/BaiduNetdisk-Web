@@ -6,7 +6,8 @@
       <!--  多选按钮管理  -->
       <div>
         <el-button-group>
-          <el-button type="primary" :icon="Download" @click="startDownload" round><b>开始所有任务</b></el-button>
+          <el-button type="primary" :icon="Download" @click="startDownload" round><b>全部开始</b></el-button>
+          <el-button type="primary" :icon="Close" @click="pauseDownload(null)" plain round><b>全部暂停</b></el-button>
           <el-button type="primary" :icon="Close" @click="cancelDownload(null)" plain round><b>删除所有任务</b></el-button>
         </el-button-group>
       </div>
@@ -87,17 +88,15 @@ const data = computed(() => {
 const itemClick = itemData => {
   const rawData = toRaw(itemData)
   if (store.state.download[rawData.fsid].status === 'pending') return // 在点击第一次后设置状态为pending，防止重复点击
-  // 存在fsid说明是暂停状态
   if (rawData?.status === 'pause') {  // 当前状态是暂停，则重新连接
     data.value[rawData.fsid].connect = '正在重新连接...'
-    store.dispatch('getFileMeta', [rawData.fsid])
-        .then(res => {
-          data.value[rawData.fsid].connect = '正在获取资源...'
-          const fileMeta = res.list[0]
-          api.getDownload(fileMeta.dlink, fileMeta.filename, rawData.fsid)
-        })
+    store.dispatch('getFileMeta', [rawData.fsid]).then(res => {
+      data.value[rawData.fsid].connect = '正在获取资源...'
+      const fileMeta = res.list[0]
+      api.startOneTask(fileMeta.dlink, rawData.fsid)
+    })
   } else if (rawData?.status === 'run') {  // 当前状态是下载中，则暂停任务
-    api.closeWebsocket(rawData)
+    api.pauseOneTask(rawData.fsid)
   }
   store.state.download[rawData.fsid].status = 'pending' // 在点击第一次后设置状态为pending，防止在收到服务器响应前重复点击，造成错误
 }
@@ -127,11 +126,16 @@ const cancelDownload = itemData => {
   }
 }
 
-// 开始所有任务
+// 开始全部任务
 const startDownload = () => {
   api.wsStartDownload({
     sum: 3
   })
+}
+
+// 暂停全部任务
+const pauseDownload = () => {
+  api.wsPauseDownload()
 }
 
 </script>

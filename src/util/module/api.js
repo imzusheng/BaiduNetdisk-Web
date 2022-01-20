@@ -41,7 +41,7 @@ export default class API {
         //   status: 'pause'
         // })
       } else if (dataToJson.type === 'chunk') { // 下载中
-        // TODO 服务器回传进度时节流
+        // TODO 服务器回传进度时节流, 或者小于100kb的文件不回传进度了,直接end
         state.download[dataToJson.fsid] = dataToJson
       } else {
         console.log(dataToJson)
@@ -182,27 +182,6 @@ export default class API {
         // electron环境时允许跨域，不需要代理
         axiosTools.get(url).then(res => resolve(res))
       }
-    })
-  }
-  
-  // 代理下载
-  getDownload = (dlink, filename, fsid) => {
-    // 发送dlink到服务器开始下载
-    ws.sendMsg({
-      type: 'download',
-      uk: state.userInfo.uk,
-      filename,
-      fsid,
-      url: `${dlink}&access_token=${accessToken.value}`.toString(),
-    })
-  }
-  
-  // 暂停任务
-  closeWebsocket = fileInfo => {
-    const {fsid} = fileInfo
-    ws.sendMsg({
-      type: 'pause',
-      fsid
     })
   }
   
@@ -367,5 +346,33 @@ export default class API {
       accessToken: accessToken.value,
       sum: 3
     }, opt))
+  }
+  
+  // 暂停所有任务
+  wsPauseDownload = () => {
+    ws.sendMsg({
+      type: 'closeDownload',
+      uk: JSON.stringify(store.state.userInfo?.uk),
+    })
+  }
+  
+  // 开始下载一个任务
+  startOneTask = (dlink, fsid) => {
+    // 发送dlink到服务器开始下载
+    ws.sendMsg({
+      type: 'startOneTask',
+      uk: state.userInfo.uk,
+      accessToken: accessToken.value,
+      fsid,
+      dlink
+    })
+  }
+  
+  // 暂停任务
+  pauseOneTask = fsid => {
+    ws.sendMsg({
+      type: 'pauseOneTask',
+      fsid
+    })
   }
 }

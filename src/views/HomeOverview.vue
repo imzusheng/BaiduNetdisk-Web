@@ -214,13 +214,11 @@ const toolsDownload = async () => {
           fsids.push(...notDirFsids)
           download(fsids)
         })
-        .catch(() => {
-          console.log('关闭')
-        })
+        .catch(() => { })
   })
 }
 
-// 处理批量下载
+// 处理批量下载 toolsDownload 拆分
 function download(fsids) {
   const loadingInstance = ElLoading.service({
     fullscreen: true,
@@ -261,9 +259,6 @@ function download(fsids) {
     loadingInstance.close()
     ElMessage.success('已添加任务到下载列表')
     api.wsStartDownload()
-    // 所有请求的response未经处理,都在res里面,需要把他合并成一个数组
-    // const resList = Object.values(res).map(value => value?.list instanceof Array ? value.list : []) // 先取出所有数组到一个数组内
-    // const handledResList = resList.reduce((prev, next) => [...prev, ...next]) // 合并所有小数组到一个数组内
   })
 }
 
@@ -315,6 +310,7 @@ const clearData = () => {
 // }
 // }
 
+// 点击了单元格
 const cellClick = (row, column, cell, event) => {
   if (Array.from(event.target.classList).includes('home-main-filename')) { // 点击了文件名
     if (row.isdir === 1) { // 是文件夹
