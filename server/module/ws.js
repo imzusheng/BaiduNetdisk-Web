@@ -5,7 +5,8 @@ const {
   writeDownload,
   handleRecordTasks,
   toolsReadFile,
-  getFileRange
+  getFileRange,
+  throttle
 } = require('./util')
 
 // process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0'
@@ -136,6 +137,8 @@ qws.on('message', async (ws, data) => {
       
       const range = getFileRange(uk, filePath) || 0 // 下载起始位置
       
+      const sendProgress = throttle(msg => ws.send(JSON.stringify(msg)), 100)
+      
       // 对重定向链接发起下载请求
       https.get(url + `&access_token=${ws.access_token}`, {
         headers: {
@@ -159,7 +162,8 @@ qws.on('message', async (ws, data) => {
           }
           wd.write(chunk) // 开始写入  如果需要直接转发资源，使用Buffer.from(chunk).buffer转换为ArrayBuffer
           curFileSize += chunk.length // 记录当前数据大小，用来计算下载进度
-          ws.send(JSON.stringify({
+          // 回传当前的下载进度到前端 使用了节流
+          sendProgress({
             fsid,
             total,
             filename,
@@ -167,7 +171,7 @@ qws.on('message', async (ws, data) => {
             status: 'run',
             type: 'chunk',
             progress: (curFileSize / total * 100).toFixed(2)
-          }))  // 回传当前的下载进度到前端
+          })
         })
         
         // 下载结束标记

@@ -227,6 +227,20 @@ const toolsReadFile = filePath => {
   return path.extname(filePath) === '.json' ? JSON.parse(result) : result
 }
 
+/**
+ * 节流throttle
+ */
+const throttle = (fn, delay) => {
+  let lastTime = Date.now()
+  return function (msg) {
+    const curTime = Date.now()
+    if (curTime - lastTime > delay) {
+      lastTime = curTime
+      fn(msg)
+    }
+  }
+}
+
 module.exports = {
   isExist,
   deleteFiles,
@@ -238,4 +252,5 @@ module.exports = {
   listLocalFiles,
   deleteDownload,
   handleRecordTasks,
+  throttle
 }
