@@ -214,6 +214,7 @@ const openRootExplorer = () => {
             > span {
               display: flex;
               align-items: center;
+              position: relative;
             }
 
             // 文件图标

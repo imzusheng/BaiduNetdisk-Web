@@ -6,6 +6,7 @@
 <template>
   <!-- 主内容 s  -->
   <el-main>
+    <!--  功能按钮 s  -->
     <div class="home-main-tools">
       <!--  功能按钮 s  -->
       <div class="home-main-btn">
@@ -55,8 +56,24 @@
                      :src="iconPath(util.getFileIcon(scope.row.server_filename))"
                      class="table-file-icon"
                      alt="icon">
-                <div class="home-main-filename">{{ scope.row.server_filename }}</div>
-              </span>
+                <div class="home-main-filename">
+                  {{ scope.row.server_filename }}
+                </div>
+                <div class="home-filename-operate">
+                  <download style="width: 18px; height: 18px; cursor: pointer" @click="doDownloadOne"/>
+                  <delete style="width: 18px; height: 18px; cursor: pointer" @click="doDeleteOne"/>
+                  <el-dropdown trigger="hover" show-timeout="500">
+                    <more style="width: 16px; height: 16px; cursor: pointer"/>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item>重命名</el-dropdown-item>
+                        <el-dropdown-item>移动到</el-dropdown-item>
+                        <el-dropdown-item>复制到</el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
+          </span>
         </template>
       </el-table-column>
       <!-- 修改日期 s -->
@@ -91,7 +108,7 @@ import {useStore} from 'vuex'
 import {api, util} from '@/util'
 import {useRouter} from 'vue-router'
 import {computed, onMounted, reactive, ref, toRaw} from 'vue'
-import {Share, Download, Delete} from '@element-plus/icons-vue'
+import {Share, Download, Delete, More} from '@element-plus/icons-vue'
 import {ElLoading, ElMessage, ElMessageBox} from 'element-plus'
 
 const store = useStore()
@@ -212,14 +229,15 @@ const toolsDownload = async () => {
           const fsids = files.map(v => v.fs_id)
           const notDirFsids = notDir.map(v => v.fs_id)
           fsids.push(...notDirFsids)
-          download(fsids)
+          doDownload(fsids)
         })
-        .catch(() => { })
+        .catch(() => {
+        })
   })
 }
 
 // 处理批量下载 toolsDownload 拆分
-function download(fsids) {
+function doDownload(fsids) {
   const loadingInstance = ElLoading.service({
     fullscreen: true,
     text: '正在添加任务到下载列表...'
@@ -320,7 +338,10 @@ const cellClick = (row, column, cell, event) => {
         query: {path: encodeURIComponent(row.path)}
       })
     }
-  } else {
+  } else if ( // 这个判断真的很没办法，不优雅
+      event.target.tagName.toLowerCase() !== 'path' &&
+      (Array.from(event.target.classList).length === 0 || Array.from(event.target.classList).includes('cell'))
+  ) { // 点击了其他位置，则切换选中状态
     multipleTableRef.value.toggleRowSelection(row, undefined) // 若设置true/false则直接设置选中状态
     rowSelection.push(row)
   }
@@ -345,10 +366,22 @@ const updateBreadcrumb = index => {
   store.commit('setBreadcrumb')
 }
 
+// 下载一个文件
+const doDownloadOne = () => {
+  ElMessage.warning('暂未开通该功能')
+}
+
+// 删除一个文件
+const doDeleteOne = () => {
+  ElMessage.warning('暂未开通该功能')
+}
+
+// 上传文件
 const upload = () => {
   ElMessage.warning('暂未开通该功能')
 }
 
+// 新建文件夹
 const mkdir = () => {
   ElMessage.warning('暂未开通该功能')
 }
@@ -372,6 +405,7 @@ onMounted(() => {
       display: flex;
       flex-direction: column;
 
+      // 功能按钮
       .home-main-tools {
         width: 100%;
 
@@ -414,15 +448,24 @@ onMounted(() => {
               > .el-table__cell:nth-of-type(2) {
                 cursor: pointer !important; // 文件名那列
               }
+
+              &:hover {
+                .home-filename-operate {
+                  background: #f5f7fa !important;
+                  visibility: visible !important;
+                }
+              }
             }
 
             .el-table__cell {
+              transition: none !important;
               color: #999;
 
               .cell {
                 > span {
                   display: flex;
                   align-items: center;
+                  position: relative;
                 }
 
                 // 文件图标
@@ -443,6 +486,26 @@ onMounted(() => {
 
                   &:hover {
                     color: #409eff !important;
+                  }
+                }
+
+                .home-filename-operate {
+                  background: #fff;
+                  transform: translate(0, -50%);
+                  position: absolute;
+                  right: 0;
+                  top: 50%;
+                  display: flex;
+                  justify-content: flex-end;
+                  align-items: center;
+                  visibility: hidden;
+
+                  svg {
+                    margin-left: 12px;
+
+                    &:hover {
+                      color: #409eff;;
+                    }
                   }
                 }
               }
