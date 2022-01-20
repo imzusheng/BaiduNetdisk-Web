@@ -58,7 +58,13 @@ export const store = createStore({
     },
     // 更改文件的下载/暂停状态
     setDownloadStatus(state, payload) {
-      state.download[payload.fsid].status = payload.status
+      if (payload.status === 'pauseAll') {
+        Object.keys(state.download).forEach(fsid => {
+          state.download[fsid].status = 'pause'
+        })
+      } else {
+        state.download[payload.fsid].status = payload.status
+      }
     },
     // 更新面包屑是否超出宽度
     setBreadcrumb() {

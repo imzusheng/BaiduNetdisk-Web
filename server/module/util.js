@@ -40,12 +40,6 @@ const writeDownload = async (uk, taskInfo) => {
       flags: 'a+'
     })
     writeStream.once('ready', () => resolve(writeStream))
-    writeStream.once('end', () => {
-      console.log('写入流 end')
-    })
-    writeStream.once('close', () => {
-      console.log('写入流 close')
-    })
   })
 }
 
@@ -187,6 +181,7 @@ const handleRecordTasks = async (taskInfo, uk, type) => {
     delete jsonData[taskInfo.fsid]
   } else if (type === 'write') { // 写入待下载文件，用户专属。 recordTasks路由调用
     taskInfo.forEach(task => jsonData[task.fsid] = task)
+    console.log('写入', jsonData)
   }
   
   fs.writeFileSync(filePath, JSON.stringify(jsonData), {flag: 'w+', encoding: 'utf-8'})

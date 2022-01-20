@@ -1,8 +1,8 @@
 // doc https://pan.baidu.com/union/doc
 
 import {axiosTools, config} from "@/util"
-import {ElMessage} from "element-plus"
 import {computed} from "vue"
+
 let store, state, ws, accessToken
 
 export default class API {
@@ -25,21 +25,14 @@ export default class API {
       
       if (dataToJson.type === 'end') { // 确认收到结束标记
         delete state.download[dataToJson.fsid]  // 下载列表删除该任务
-        // 下载任务太快时,弹出会卡顿
-        // ElMessage({
-        //   type: "success",
-        //   message: `${dataToJson.filename} 下载成功`
-        // })
         store.dispatch('getLocalFiles')
-      } else if (dataToJson.type === 'pause') { // 暂停标记
-        ElMessage({
-          type: "warning",
-          message: `暂未开放暂停功能`
+      } else if (dataToJson.type === 'pause') { // 暂停任务
+        store.commit('setDownloadStatus', {
+          fsid: dataToJson.fsid,
+          status: 'pause'
         })
-        // store.commit('setDownloadStatus', {
-        //   fsid: dataToJson.fsid,
-        //   status: 'pause'
-        // })
+      } else if (dataToJson.type === 'pauseAll') {
+        store.commit('setDownloadStatus', {status: 'pauseAll'})
       } else if (dataToJson.type === 'chunk') { // 下载中
         // TODO 服务器回传进度时节流, 或者小于100kb的文件不回传进度了,直接end
         state.download[dataToJson.fsid] = dataToJson
@@ -351,7 +344,7 @@ export default class API {
   // 暂停所有任务
   wsPauseDownload = () => {
     ws.sendMsg({
-      type: 'closeDownload',
+      type: 'pauseDownload',
       uk: JSON.stringify(store.state.userInfo?.uk),
     })
   }

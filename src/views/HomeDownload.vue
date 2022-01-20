@@ -4,12 +4,20 @@
     <!--  删除任务栏 s  -->
     <div class="download-tools">
       <!--  多选按钮管理  -->
-      <div>
+      <div style="display: flex; align-items: center">
         <el-button-group>
           <el-button type="primary" :icon="Download" @click="startDownload" round><b>全部开始</b></el-button>
-          <el-button type="primary" :icon="Close" @click="pauseDownload(null)" plain round><b>全部暂停</b></el-button>
-          <el-button type="primary" :icon="Close" @click="cancelDownload(null)" plain round><b>删除所有任务</b></el-button>
+          <el-button type="primary" :icon="VideoPause" @click="pauseDownload()" plain round><b>全部暂停</b></el-button>
         </el-button-group>
+        <el-button
+            @click="cancelDownload(null)"
+            style="margin-left: 12px"
+            type="warning"
+            :icon="Close"
+            plain
+            round>
+          <b>删除所有任务</b>
+        </el-button>
       </div>
 
       <!-- 提示文本 s -->
@@ -19,14 +27,15 @@
             style="width: 16px; height: 16px; cursor: pointer; color: rgba(255,186,21,1); margin-right: 6px;"/>
         单击可开始/暂停下载
       </div>
+
     </div>
 
-    <ul class="download-list" v-if="Object.values(data).length > 0">
+    <ul class="download-list" v-if="data.length > 0">
 
       <!-- 下载任务项 s -->
       <li
           class="download-list-item"
-          v-for="(item, key) in Object.values(data)"
+          v-for="(item, key) in data"
           :key="key">
         <div class="download-item-content" @click="itemClick(item)">
           <!--  模拟进度条  s    -->
@@ -67,31 +76,21 @@
 import {useStore} from "vuex";
 import {computed, toRaw} from "vue"
 import {util, api} from '@/util'
-import {InfoFilled, Close, DeleteFilled, Download} from "@element-plus/icons-vue"
+import {InfoFilled, Close, DeleteFilled, Download, VideoPause} from "@element-plus/icons-vue"
 
 const store = useStore()
 
 // 未完成的任务列表数据
-const data = computed(() => {
-  // const dataList = Object.values(store.state.download).sort((a, b) => {
-  //   return parseInt(a.curFileSize) < parseInt(b.curFileSize) ? 1 : -1
-  // })
-  // const dataObj = {}
-  // dataList.forEach(value => {
-  //   dataObj[value.fsid] = value
-  // })
-  // return dataObj
-  return store.state.download
-})
+const data = computed(() => Object.values(store.state.download))
 
 // 点击其中一个任务
 const itemClick = itemData => {
   const rawData = toRaw(itemData)
   if (store.state.download[rawData.fsid].status === 'pending') return // 在点击第一次后设置状态为pending，防止重复点击
   if (rawData?.status === 'pause') {  // 当前状态是暂停，则重新连接
-    data.value[rawData.fsid].connect = '正在重新连接...'
+    store.state.download[rawData.fsid].connect = '正在重新连接...'
     store.dispatch('getFileMeta', [rawData.fsid]).then(res => {
-      data.value[rawData.fsid].connect = '正在获取资源...'
+      store.state.download[rawData.fsid].connect = '正在获取资源...'
       const fileMeta = res.list[0]
       api.startOneTask(fileMeta.dlink, rawData.fsid)
     })
@@ -113,7 +112,7 @@ const cancelDownload = itemData => {
       store.dispatch('getLocalFiles')
     })
   } else { // 删除全部任务
-    const filePathList = Object.values(toRaw(data.value)).map(v => {
+    const filePathList = data.value.map(v => {
       return {
         path: v.path,
         fsid: v.fsid
