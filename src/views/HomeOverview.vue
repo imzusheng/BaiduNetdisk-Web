@@ -354,7 +354,7 @@ const updateBreadcrumb = index => {
   } else { // 确保不是自己点自己，以及不是在根目录点击根目录的状态下
     router.push({
       query: {
-        path: encodeURIComponent(`${breadcrumb.value.slice(0, index + 1).join('/').replace('全部文件', '')}`) || '/'
+        path: encodeURIComponent(`${breadcrumb.value.slice(0, index + 1).join('/').replace('全部文件', '')}` || '/')
       }
     })
   }

@@ -46,10 +46,11 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   if (to.name === 'HomeOverview' && from.name === 'HomeOverview' || !from.name) { // 当在HomeOverview页面内操作路由时
+    if (!to.query?.path) return next({query: {path: encodeURIComponent('/')}})
     // 清空表单数据
     store.state.fileList = [{}, {}, {}]
     // 从url中提取路径
-    const rawPath = to.query?.path ? decodeURIComponent(to.query.path.toString()) : '/'
+    const rawPath = decodeURIComponent(to.query.path.toString())
     // 用路径获取文件列表
     store.dispatch('getFilesList', rawPath)
     // 处理路径，切割成数组并更新面包屑

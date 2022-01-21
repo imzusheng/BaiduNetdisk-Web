@@ -66,7 +66,7 @@
             class="el-menu-vertical-demo"
             mode="vertical">
           <!-- 菜单 所有文件 s -->
-          <el-menu-item index="overview" @click="$router.replace('/overview')">
+          <el-menu-item index="overview" @click="$router.replace({ name: 'HomeOverview'})">
             <house style="width: 16px; height: 16px; cursor: pointer"/>
             <span style="width: 8px"></span>
             <span>所有文件</span>
