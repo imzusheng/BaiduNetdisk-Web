@@ -10,11 +10,11 @@
     <div class="home-main-tools">
       <!--  功能按钮 s  -->
       <div class="home-main-btn">
-        <el-button-group>
+        <el-button-group style="margin-right: 12px">
           <el-button type="primary" :icon="Share" round @click="upload"><b>上传</b></el-button>
           <el-button type="primary" :icon="Share" plain round @click="mkdir"><b>新建文件夹</b></el-button>
         </el-button-group>
-        <el-button-group style="margin-left: 12px">
+        <el-button-group>
           <el-button type="primary" :icon="Share" plain round @click="toolsShare"
                      :disabled="rowSelection.length === 0"><b>分享</b></el-button>
           <el-button type="primary" :icon="Download" plain round @click="toolsDownload"
