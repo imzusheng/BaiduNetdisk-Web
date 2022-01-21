@@ -61,17 +61,7 @@
                 </div>
                 <div class="home-filename-operate">
                   <download style="width: 18px; height: 18px; cursor: pointer" @click="doDownloadOne(scope.row)"/>
-                  <delete style="width: 18px; height: 18px; cursor: pointer" @click="doDeleteOne"/>
-                  <el-dropdown trigger="hover" :show-timeout="300">
-                    <more style="width: 16px; height: 16px; cursor: pointer"/>
-                    <template #dropdown>
-                      <el-dropdown-menu>
-                        <el-dropdown-item>重命名</el-dropdown-item>
-                        <el-dropdown-item>移动到</el-dropdown-item>
-                        <el-dropdown-item>复制到</el-dropdown-item>
-                      </el-dropdown-menu>
-                    </template>
-                  </el-dropdown>
+                  <delete style="width: 18px; height: 18px; cursor: pointer" @click="doDeleteOne(scope.row)"/>
                 </div>
           </span>
         </template>
@@ -108,7 +98,7 @@ import {useStore} from 'vuex'
 import {api, util} from '@/util'
 import {useRouter} from 'vue-router'
 import {computed, onMounted, reactive, ref, toRaw} from 'vue'
-import {Share, Download, Delete, More} from '@element-plus/icons-vue'
+import {Share, Download, Delete} from '@element-plus/icons-vue'
 import {ElLoading, ElMessage, ElMessageBox} from 'element-plus'
 
 const store = useStore()
@@ -329,7 +319,8 @@ const clearData = () => {
 // }
 
 // 点击了单元格
-const cellClick = (row, column, cell, event) => {
+const cellClick = (rowProxy, column, cell, event) => {
+  const row = toRaw(rowProxy)
   if (Array.from(event.target.classList).includes('home-main-filename')) { // 点击了文件名
     if (row.isdir === 1) { // 是文件夹
       clearData()
@@ -403,8 +394,28 @@ const doDownloadOne = async fileInfo => {
 }
 
 // 删除一个文件
-const doDeleteOne = () => {
-  ElMessage.warning('暂未开通该功能')
+const doDeleteOne = fileInfo => {
+  ElMessageBox.confirm(
+      `确定要删除这1个文件或文件夹吗?`,
+      '提示',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      })
+      .then(() => {
+        store.dispatch('postFileManager', {
+          opera: 'delete',
+          filelist: [fileInfo.path]
+        }).then(res => {
+          if (res.error) {
+            ElMessage.error('删除失败')
+          } else {
+            ElMessage.success('删除成功')
+          }
+          store.dispatch('getFilesList')
+        })
+      })
 }
 
 // 上传文件
@@ -525,6 +536,7 @@ onMounted(() => {
                   background: #fff;
                   transform: translate(0, -50%);
                   position: absolute;
+                  z-index: 4;
                   right: 0;
                   top: 50%;
                   display: flex;
