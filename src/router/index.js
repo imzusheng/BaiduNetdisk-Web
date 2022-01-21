@@ -19,22 +19,16 @@ const routes = [
           keepalive: true
         }
       },
-      {
-        path: '/photo',
-        name: 'Photo',
-        component: () => import(/* webpackChunkName: "home" */ '../views/HomeOverview.vue'),
-        meta: {
-          keepalive: true
+      ...['imagelist', 'videolist', 'doclist', 'btlist'].map(path => {
+        return {
+          path: `/${path}`,
+          name: path,
+          component: () => import(/* webpackChunkName: "home" */ '../views/HomeOverview.vue'),
+          meta: {
+            keepalive: true
+          }
         }
-      },
-      {
-        path: '/video',
-        name: 'Video',
-        component: () => import(/* webpackChunkName: "home" */ '../views/HomeOverview.vue'),
-        meta: {
-          keepalive: true
-        }
-      },
+      }),
       {
         path: '/download',
         name: 'HomeDownload',
@@ -52,6 +46,12 @@ const routes = [
         }
       }
     ]
+  },
+  {
+    // 匹配所有路径  vue2使用*
+    // vue3使用/:pathMatch(.*)*或/:pathMatch(.*)或/:catchAll(.*)
+    path: '/:pathMatch(.*)',
+    redirect: '/overview'
   }
 ]
 
@@ -83,10 +83,12 @@ router.beforeEach((to, from, next) => {
     store.commit('setBreadcrumb')
     // 加载状态
     store.state.fileListLoading = true
-  } else if (['video', 'photo'].includes(to.name.toLowerCase())) { // 进入文件分类界面
+  } else if (['imagelist', 'videolist', 'doclist', 'btlist'].includes(to.name.toLowerCase())) { // 进入文件分类界面
     // 清空表单数据
     store.state.fileList = [{}, {}, {}]
-    store.dispatch('getFileImages', '/')
+    store.dispatch('getFileCategory', {
+      category: to.name.toLowerCase()
+    })
     store.state.fileListLoading = true
   }
   next()

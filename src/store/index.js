@@ -206,9 +206,9 @@ export const store = createStore({
       return api.postRecordTasks(payload)
     },
     // 获取文件-分类图片
-    getFileImages({commit, state}, path) {
+    getFileCategory({commit, state}, payload) {
       const fn = () => {
-        api.getFileImages(path).then(res => {
+        api.getFileCategory(payload).then(res => {
           commit('setFilesList', {list: res.info})
         })
       }

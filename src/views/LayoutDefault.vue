@@ -79,8 +79,10 @@
               <span style="width: 8px"></span>
               <span>文件分类</span>
             </template>
-            <el-menu-item index="photo">图片</el-menu-item>
-            <el-menu-item index="video">视频</el-menu-item>
+            <el-menu-item index="imagelist">图片</el-menu-item>
+            <el-menu-item index="videolist">视频</el-menu-item>
+            <el-menu-item index="doclist">文档</el-menu-item>
+            <el-menu-item index="btlist">bt种子</el-menu-item>
           </el-sub-menu>
           <!-- 菜单 下载任务 s -->
           <el-menu-item index="download">

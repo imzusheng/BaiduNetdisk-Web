@@ -370,7 +370,7 @@ export default class API {
   }
   
   // 获取文件-图片
-  getFileImages = path => {
+  getFileCategory = ({path = '/', category}) => {
     return new Promise(resolve => {
       axiosTools.proxy('/proxy', {
         // 当前请求的参数
@@ -378,7 +378,7 @@ export default class API {
           url: 'https://pan.baidu.com/rest/2.0/xpan/file',
           // 代理的参数
           params: {
-            method: 'imagelist',
+            method: category,
             parent_path: path,
             recursion: 1, // 是否递归
             web: 1, // 略缩图
