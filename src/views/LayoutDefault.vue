@@ -154,7 +154,8 @@ onMounted(() => {
       })
       // (不需要uk)但需要access_token
       store.dispatch('getQuotaInfo') // 获取配额，容量信息
-      store.dispatch('getFilesList') // 获取文件列表
+      // 处理搁置的请求
+      store.dispatch('shelveGet')
     } else {
       store.state.dialogVisible = true
     }
@@ -176,19 +177,9 @@ const searchSelect = ref('当前目录')
 
 // 菜单选择
 const menuSelect = index => {
-  if (['photo', 'video'].includes(index)) {
-    router.push({
-      path: '/overview',
-      query: {
-        path: router.currentRoute.value.query?.path || encodeURIComponent('/'),
-        category: index
-      }
-    })
-  } else {
-    router.replace({
-      path: `/${index}`
-    })
-  }
+  router.replace({
+    path: `/${index}`
+  })
 }
 
 // 搜索文件

@@ -34,7 +34,9 @@ export const store = createStore({
     // 用户信息
     userInfo: {},
     // 已下载的页面数据
-    listLocalFiles: []
+    listLocalFiles: [],
+    // 搁置的请求
+    shelveRequest: []
   },
   mutations: {
     // 授权信息
@@ -91,6 +93,10 @@ export const store = createStore({
     }
   },
   actions: {
+    // 处理因为未获取access_token而搁置的请求
+    shelveGet({state}){
+      state.shelveRequest.forEach(request => request())
+    },
     // 获取token
     getAuth({commit}) {
       return new Promise(resolve => {
@@ -157,9 +163,14 @@ export const store = createStore({
     // 获取文件列表
     getFilesList({state, commit}, payload) {
       const path = payload || state.fileListBreadcrumb.join('/').replaceAll('全部文件', '')
-      api.getFileList(path).then(res => {
-        commit('setFilesList', res)
-      })
+      const fn = () => {
+        api.getFileList(path).then(res => commit('setFilesList', res))
+      }
+      if (!store.state.auth['access_token']) {
+        state.shelveRequest.push(fn)
+      } else {
+        fn()
+      }
     },
     // 退出登录
     logout() {
@@ -193,6 +204,19 @@ export const store = createStore({
     // 记录下载任务到json
     postRecordTasks(context, payload) {
       return api.postRecordTasks(payload)
+    },
+    // 获取文件-分类图片
+    getFileImages({commit, state}, path) {
+      const fn = () => {
+        api.getFileImages(path).then(res => {
+          commit('setFilesList', {list: res.info})
+        })
+      }
+      if (!store.state.auth['access_token']) {
+        state.shelveRequest.push(fn)
+      } else {
+        fn()
+      }
     }
   },
   modules: {}

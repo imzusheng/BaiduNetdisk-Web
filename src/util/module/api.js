@@ -368,4 +368,28 @@ export default class API {
       fsid
     })
   }
+  
+  // 获取文件-图片
+  getFileImages = path => {
+    return new Promise(resolve => {
+      axiosTools.proxy('/proxy', {
+        // 当前请求的参数
+        params: {
+          url: 'https://pan.baidu.com/rest/2.0/xpan/file',
+          // 代理的参数
+          params: {
+            method: 'imagelist',
+            parent_path: path,
+            recursion: 1, // 是否递归
+            web: 1, // 略缩图
+            order: 'time', // 默认按时间排序
+            desc: 1, // 升降序
+            // page: 1, // 如果不指定页码，则为不分页模式
+            num: 100, // 每页文件数
+            access_token: accessToken.value
+          }
+        }
+      }).then(res => resolve(res))
+    })
+  }
 }
