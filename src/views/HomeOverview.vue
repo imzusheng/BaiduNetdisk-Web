@@ -60,9 +60,9 @@
                   {{ scope.row.server_filename }}
                 </div>
                 <div class="home-filename-operate">
-                  <download style="width: 18px; height: 18px; cursor: pointer" @click="doDownloadOne"/>
+                  <download style="width: 18px; height: 18px; cursor: pointer" @click="doDownloadOne(scope.row)"/>
                   <delete style="width: 18px; height: 18px; cursor: pointer" @click="doDeleteOne"/>
-                  <el-dropdown trigger="hover" show-timeout="500">
+                  <el-dropdown trigger="hover" :show-timeout="300">
                     <more style="width: 16px; height: 16px; cursor: pointer"/>
                     <template #dropdown>
                       <el-dropdown-menu>
@@ -367,8 +367,39 @@ const updateBreadcrumb = index => {
 }
 
 // 下载一个文件
-const doDownloadOne = () => {
-  ElMessage.warning('暂未开通该功能')
+const doDownloadOne = async fileInfo => {
+  const rawFileInfo = toRaw(fileInfo)
+  let fsids = []
+  if (rawFileInfo.isdir === 1) {
+    // 全屏加载动画
+    const loadingInstance = ElLoading.service({
+      fullscreen: true,
+      text: '正在整理文件信息...'
+    })
+    const res = await store.dispatch('getMultiFileList', rawFileInfo.path)
+    fsids = res.list.map(v => v.fs_id)
+    loadingInstance.close()
+  } else {
+    fsids.push(rawFileInfo.path)
+  }
+  ElMessageBox.confirm(
+      `
+        <p>确定要下载这${fsids.length}个文件或文件夹吗?</p>
+        <p><small style="color: #999">${fsids.length > 500 ? '(文件数大于500.也不是说我不行,但建议用客户端下载.)' : ''}</small></p>
+        `,
+      '提示',
+      {
+        dangerouslyUseHTMLString: true,
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      })
+      .then(() => {
+        // 将结果中的fsid提取出来
+        doDownload(fsids)
+      })
+      .catch(() => {
+      })
 }
 
 // 删除一个文件
@@ -386,6 +417,7 @@ const mkdir = () => {
   ElMessage.warning('暂未开通该功能')
 }
 
+// 更新面包屑
 onMounted(() => {
   store.commit('setBreadcrumb')
 })
