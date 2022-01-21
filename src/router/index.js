@@ -46,8 +46,6 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   if (to.name === 'HomeOverview' && from.name === 'HomeOverview' || !from.name) { // 当在HomeOverview页面内操作路由时
-    // 加载状态
-    store.state.fileListLoading = true
     // 清空表单数据
     store.state.fileList = [{}, {}, {}]
     // 从url中提取路径
@@ -60,6 +58,8 @@ router.beforeEach((to, from, next) => {
     store.state.fileListBreadcrumb.unshift('全部文件')
     // 检测面包屑长度是否超标
     store.commit('setBreadcrumb')
+    // 加载状态
+    store.state.fileListLoading = true
     next()
   } else if (to.name === 'HomeOverview' && from.name !== 'HomeOverview' && !to.query?.path) { // 当从其他页面来到HomeOverview时，重新把path信息写到url(为了看起来正常)
     // 以下这段代码删掉对运行无影响，只是为了url看起来不让人感觉奇怪

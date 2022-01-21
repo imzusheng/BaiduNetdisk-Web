@@ -37,7 +37,7 @@
       </div>
 
       <!--   搜索栏 s  -->
-      <div class="home-header-search">
+      <div class="home-header-search" v-if="$router.currentRoute.value.name === 'HomeOverview'">
         <el-input
             v-model="searchInput"
             placeholder="搜索网盘文件"
