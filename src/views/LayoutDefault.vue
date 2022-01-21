@@ -35,7 +35,6 @@
           </span>
         </span>
       </div>
-
       <!--   搜索栏 s  -->
       <div class="home-header-search" v-if="$router.currentRoute.value.name === 'HomeOverview'">
         <el-input
@@ -58,7 +57,6 @@
     </el-header>
 
     <el-container>
-
       <!--  侧边栏 s  -->
       <el-aside :class="'home-aside'">
         <!--  菜单 s -->
@@ -67,14 +65,23 @@
             :class="'home-aside-menu'"
             class="el-menu-vertical-demo"
             mode="vertical">
+          <!-- 菜单 所有文件 s -->
           <el-menu-item index="overview" @click="$router.replace('/overview')">
-            <house
-                style="width: 16px; height: 16px; cursor: pointer"/>
+            <house style="width: 16px; height: 16px; cursor: pointer"/>
             <span style="width: 8px"></span>
-            <span>
-              所有文件
-            </span>
+            <span>所有文件</span>
           </el-menu-item>
+          <!-- 文件分类 s -->
+          <el-sub-menu index="category">
+            <template #title>
+              <tickets style="width: 16px; height: 16px; cursor: pointer"/>
+              <span style="width: 8px"></span>
+              <span>文件分类</span>
+            </template>
+            <el-menu-item index="1-1">图片</el-menu-item>
+            <el-menu-item index="1-2">视频</el-menu-item>
+          </el-sub-menu>
+          <!-- 菜单 下载任务 s -->
           <el-menu-item index="download" @click="$router.replace('/download')">
             <odometer style="width: 16px; height: 16px; cursor: pointer"/>
             <span style="width: 8px"></span>
@@ -83,13 +90,11 @@
             </el-badge>
             <span v-else>下载中</span>
           </el-menu-item>
+          <!-- 菜单 已下载 s -->
           <el-menu-item index="transmit" @click="$router.replace('/transmit')">
-            <download
-                style="width: 16px; height: 16px; cursor: pointer"/>
+            <download style="width: 16px; height: 16px; cursor: pointer"/>
             <span style="width: 8px"></span>
-            <span>
-              已下载（{{ localFilesSum }}）
-            </span>
+            <span>已下载（{{ localFilesSum }}）</span>
           </el-menu-item>
         </el-menu>
         <!--  菜单 e -->
@@ -108,7 +113,7 @@
           <component :is="Component"/>
         </keep-alive>
       </router-view>
-
+      <!-- 路由主内容 e -->
     </el-container>
 
   </el-container>
@@ -117,7 +122,7 @@
 
 <script setup>
 import {computed, onMounted, ref} from 'vue'
-import {House, Download, Odometer, Search} from '@element-plus/icons-vue'
+import {House, Download, Odometer, Search, Tickets} from '@element-plus/icons-vue'
 import {useStore} from "vuex"
 import {ElLoading} from 'element-plus'
 import AuthPanel from '@/components/AuthPanel'
