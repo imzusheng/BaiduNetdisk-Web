@@ -334,7 +334,6 @@ const cellClick = (rowProxy, column, cell, event) => {
       (Array.from(event.target.classList).length === 0 || Array.from(event.target.classList).includes('cell'))
   ) { // 点击了其他位置，则切换选中状态
     multipleTableRef.value.toggleRowSelection(row, undefined) // 若设置true/false则直接设置选中状态
-    rowSelection.push(row)
   }
 }
 
