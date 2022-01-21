@@ -6,13 +6,6 @@ const routerApi = require('./module/router')
 require('./module/ws') // 导入ws代码\\
 
 express()
-    .use(async (req, res, next) => {
-      try {
-        await next()
-      } catch (e) {
-        console.log('gError', e)
-      }
-    })
     .use(cors()) // 允许跨域
     .use(bodyParser.json())
     .use(bodyParser.urlencoded({extended: false}))
