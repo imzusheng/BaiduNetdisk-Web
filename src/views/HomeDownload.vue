@@ -6,18 +6,36 @@
       <!--  多选按钮管理  -->
       <div style="display: flex; align-items: center">
         <el-button-group>
-          <el-button type="primary" :icon="Download" @click="startDownload" round><b>全部开始</b></el-button>
-          <el-button type="primary" :icon="VideoPause" @click="pauseDownload()" plain round><b>全部暂停</b></el-button>
+          <el-button
+              :disabled="data.length === 0"
+              type="primary"
+              :icon="Download"
+              @click="startDownload"
+              round>
+            <b>全部开始</b>
+          </el-button>
+          <el-button
+              :disabled="data.length === 0"
+              type="primary"
+              :icon="VideoPause"
+              @click="pauseDownload()"
+              plain
+              round>
+            <b>全部暂停</b>
+          </el-button>
         </el-button-group>
-        <el-button
-            @click="cancelDownload(null)"
-            style="margin-left: 12px"
-            type="warning"
-            :icon="Close"
-            plain
-            round>
-          <b>删除所有任务</b>
-        </el-button>
+        <el-button-group>
+          <el-button
+              @click="cancelDownload(null)"
+              :disabled="data.length === 0"
+              style="margin-left: 12px"
+              type="warning"
+              :icon="Close"
+              plain
+              round>
+            <b>删除所有任务</b>
+          </el-button>
+        </el-button-group>
       </div>
 
       <!-- 提示文本 s -->
@@ -128,7 +146,7 @@ const cancelDownload = itemData => {
 // 开始全部任务
 const startDownload = () => {
   api.wsStartDownload({
-    sum: 3
+    sum: 3 // 最大并行任务数量
   })
 }
 
