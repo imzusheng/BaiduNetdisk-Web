@@ -64,9 +64,10 @@
             :default-active="$router.currentRoute.value.path.replace('/','')"
             :class="'home-aside-menu'"
             class="el-menu-vertical-demo"
+            @select="menuSelect"
             mode="vertical">
           <!-- 菜单 所有文件 s -->
-          <el-menu-item index="overview" @click="$router.replace({ name: 'HomeOverview'})">
+          <el-menu-item index="overview">
             <house style="width: 16px; height: 16px; cursor: pointer"/>
             <span style="width: 8px"></span>
             <span>所有文件</span>
@@ -78,11 +79,11 @@
               <span style="width: 8px"></span>
               <span>文件分类</span>
             </template>
-            <el-menu-item index="1-1">图片</el-menu-item>
-            <el-menu-item index="1-2">视频</el-menu-item>
+            <el-menu-item index="photo">图片</el-menu-item>
+            <el-menu-item index="video">视频</el-menu-item>
           </el-sub-menu>
           <!-- 菜单 下载任务 s -->
-          <el-menu-item index="download" @click="$router.replace('/download')">
+          <el-menu-item index="download">
             <odometer style="width: 16px; height: 16px; cursor: pointer"/>
             <span style="width: 8px"></span>
             <el-badge :value="downloadSum" :max="999" v-if="downloadSum >0">
@@ -91,7 +92,7 @@
             <span v-else>下载中</span>
           </el-menu-item>
           <!-- 菜单 已下载 s -->
-          <el-menu-item index="transmit" @click="$router.replace('/transmit')">
+          <el-menu-item index="transmit">
             <download style="width: 16px; height: 16px; cursor: pointer"/>
             <span style="width: 8px"></span>
             <span>已下载（{{ localFilesSum }}）</span>
@@ -124,10 +125,12 @@
 import {computed, onMounted, ref} from 'vue'
 import {House, Download, Odometer, Search, Tickets} from '@element-plus/icons-vue'
 import {useStore} from "vuex"
+import {useRouter} from "vue-router"
 import {ElLoading} from 'element-plus'
 import AuthPanel from '@/components/AuthPanel'
 
 const store = useStore()
+const router = useRouter()
 
 // 全屏加载动画
 let loadingInstance
@@ -170,6 +173,24 @@ const quotaInfo = computed(() => store.state.quotaInfo)
 const searchInput = ref('')
 // 搜索位置
 const searchSelect = ref('当前目录')
+
+// 菜单选择
+const menuSelect = index => {
+  if (['photo', 'video'].includes(index)) {
+    router.push({
+      path: '/overview',
+      query: {
+        path: router.currentRoute.value.query?.path || encodeURIComponent('/'),
+        category: index
+      }
+    })
+  } else {
+    router.replace({
+      path: `/${index}`
+    })
+  }
+}
+
 // 搜索文件
 const searchFiles = () => {
   if (searchInput.value) {

@@ -10,7 +10,7 @@
     <div class="home-main-tools">
       <!--  功能按钮 s  -->
       <div class="home-main-btn">
-        <el-button-group style="margin-right: 12px">
+        <el-button-group style="margin-right: 12px" v-if="!$router.currentRoute.value.query?.category">
           <el-button type="primary" :icon="Share" round @click="upload"><b>上传</b></el-button>
           <el-button type="primary" :icon="Share" plain round @click="mkdir"><b>新建文件夹</b></el-button>
         </el-button-group>

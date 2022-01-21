@@ -46,7 +46,7 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   if (to.name === 'HomeOverview' && from.name === 'HomeOverview' || !from.name) { // 当在HomeOverview页面内操作路由时
-    if (!to.query?.path) return next({query: {path: encodeURIComponent('/')}})
+    if (!to.query?.path) return next({query: {path: encodeURIComponent('/')}}) // 不存在path参数时默认加上path='/'
     // 清空表单数据
     store.state.fileList = [{}, {}, {}]
     // 从url中提取路径
