@@ -14,10 +14,10 @@
           <el-button type="primary" :icon="Share" round @click="upload"><b>上传</b></el-button>
           <el-button type="primary" :icon="Share" plain round @click="mkdir"><b>新建文件夹</b></el-button>
         </el-button-group>
-        <el-button-group v-if="rowSelection.length > 0" style="margin-left: 12px">
-          <el-button type="primary" :icon="Share" plain round @click="toolsShare"><b>分享</b></el-button>
-          <el-button type="primary" :icon="Download" plain round @click="toolsDownload"><b>下载</b></el-button>
-          <el-button type="primary" :icon="Delete" color="rgba(254, 46, 57, .75)" round @click="toolsDelete"><b>删除</b>
+        <el-button-group style="margin-left: 12px">
+          <el-button type="primary" :icon="Share" plain round @click="toolsShare" :disabled="rowSelection.length === 0"><b>分享</b></el-button>
+          <el-button type="primary" :icon="Download" plain round @click="toolsDownload" :disabled="rowSelection.length === 0"><b>下载</b></el-button>
+          <el-button type="primary" :icon="Delete" color="rgba(254, 46, 57, .75)" round @click="toolsDelete" :disabled="rowSelection.length === 0"><b>删除</b>
           </el-button>
         </el-button-group>
       </div>
