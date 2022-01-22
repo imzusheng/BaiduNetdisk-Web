@@ -94,7 +94,7 @@ export const store = createStore({
   },
   actions: {
     // 处理因为未获取access_token而搁置的请求
-    shelveGet({state}){
+    shelveGet({state}) {
       state.shelveRequest.forEach(request => request())
     },
     // 获取token
@@ -217,6 +217,14 @@ export const store = createStore({
       } else {
         fn()
       }
+    },
+    // 获取视频流
+    getStream(context, path) {
+      return new Promise(resolve => {
+        api.getStream(path).then(({adToken}) => {
+          setTimeout(() => api.getStream(path, adToken).then(resM3u8 => resolve(resM3u8)), 6 * 1000)
+        })
+      })
     }
   },
   modules: {}

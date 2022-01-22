@@ -91,8 +91,8 @@
         <template #default="scope">{{ util.formatFileSize(scope.row.size) }}</template>
       </el-table-column>
     </el-table>
+
   </el-main>
-  <!-- 主内容 e  -->
 </template>
 
 <script setup>

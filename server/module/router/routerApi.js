@@ -8,7 +8,7 @@ const {
   handleRecordTasks,
   taskFilename,
   toolsReadFile
-} = require("./util")
+} = require("../util")
 const path = require("path");
 const querystring = require("querystring")
 const https = require("https")
