@@ -175,17 +175,20 @@ routerApi.get('/proxy', async (req, res) => {
 routerApi.get('/rawProxy', async (req, res) => {
   const {url} = req.query
   
-  console.log(url)
+  const headers = req.headers
+  delete headers.origin
+  delete headers.referer
+  delete headers.host
   
-  function get() {
+  function getAxios() {
     return new Promise(resolve => {
       axios
           .get(url, {
-            headers: {
-              "User-Agent": "pan.baidu.com",
-              // "User-Agent": "nvideo;bNestDisk;1.0.0;Android;9.0;ts",
+            headers: Object.assign(headers, {
+              'Connection': 'keep-alive',
+              // "User-Agent": "nvideo;bNestDisk;1.0.0;Windows;10;ts",
               // "Type": "M3U8_AUTO_480"
-            }
+            })
           })
           .then(res => resolve({
             error: false,
@@ -198,17 +201,19 @@ routerApi.get('/rawProxy', async (req, res) => {
     })
   }
   
-  const result = await get()
+  const result = await getAxios()
   
   console.log(result)
   
   res.writeHead(200, Object.assign(result.msg.headers, {
-    // 'Content-Type': 'video/MP2T',
-    // 'Content-Type': 'video/x-flv',
     // 'Connection': 'keep-alive',
-    'ContentDisposition': 'attachment;filename=main.flv',
+    // 'Access-Control-Allow-Credentials': true,
+    // 'Content-Type': 'video/mp2t'
   }))
+  
+  // res.write(result.msg.data, 'binary')
   res.end(result.msg.data)
+  // res.end()
 })
 
 // 封装https发送get请求

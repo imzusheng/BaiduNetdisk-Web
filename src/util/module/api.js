@@ -397,8 +397,8 @@ export default class API {
   getStream = (path, adToken = null) => {
     const params = {
       method: 'streaming',
-      // type: 'M3U8_AUTO_480',
-      type: 'M3U8_FLV_264_480',
+      type: 'M3U8_AUTO_480',
+      // type: 'M3U8_FLV_264_480',
       nom3u8: 1,
       path,
       access_token: accessToken.value

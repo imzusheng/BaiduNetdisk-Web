@@ -95,16 +95,17 @@
   </el-main>
 
   <!--  video s -->
-  <video
-      id="video"
-      :style="'position: absolute; z-index: 9999'"
-      class="video-js vjs-default-skin"
-      width="600"
-      height="300"
-      autoplay
-      controls
-      muted
-  />
+  <div id="videoPlayer" :style="'position: absolute; z-index: 9999'"></div>
+  <!--  <video-->
+  <!--      id="video"-->
+  <!--      :style="'position: absolute; z-index: 9999'"-->
+  <!--      class="video-js vjs-default-skin"-->
+  <!--      width="600"-->
+  <!--      height="300"-->
+  <!--      autoplay-->
+  <!--      controls-->
+  <!--      muted-->
+  <!--  />-->
 </template>
 
 <script setup>
@@ -116,24 +117,46 @@ import {computed, onMounted, reactive, ref, toRaw} from 'vue'
 import {Share, Download, Delete} from '@element-plus/icons-vue'
 import {ElLoading, ElMessage, ElMessageBox} from 'element-plus'
 
-import videojs from 'video.js'
-import 'video.js/dist/video-js.css'
+import Hls from 'hls.js'
+import DPlayer from 'dplayer'
+
 
 const store = useStore()
 const router = useRouter()
 
-const player = ref(null)
-
 onMounted(() => {
-  //
-  player.value = videojs('video')
-  player.value.src({
-    src: 'http://localhost:3101/public/flv.m3u8',
-    // src: 'https://d2zihajmogu5jn.cloudfront.net/bipbop-advanced/gear2/prog_index.m3u8',
-    type: 'application/x-mpegURL',
-    withCredentials: false
+  const dp = new DPlayer({
+    container: document.getElementById('videoPlayer'),
+    video: {
+      // url: 'http://localhost:3101/public/ts.m3u8',
+      url: 'http://1257120875.vod2.myqcloud.com/0ef121cdvodtransgzp1257120875/3055695e5285890780828799271/v.f230.m3u8',
+      type: 'customHls',
+      customType: {
+        customHls: function (video) {
+          const hls = new Hls()
+          hls.on(Hls.Events.ERROR, function (event, data) {
+            const errorType = data.type;
+            const errorDetails = data.details;
+            const errorFatal = data.fatal;
+            console.log(errorType, errorDetails, errorFatal)
+          });
+          hls.loadSource(video.src)
+          hls.attachMedia(video)
+          // video.play()
+        },
+      },
+    },
   })
-  player.value.play()
+  console.log(dp)
+  //
+  // player.value = videojs('video')
+  // player.value.src({
+  //   src: 'http://localhost:3101/public/flv.m3u8',
+  //   // src: 'https://d2zihajmogu5jn.cloudfront.net/bipbop-advanced/gear2/prog_index.m3u8',
+  //   type: 'application/x-mpegURL',
+  //   withCredentials: false
+  // })
+  // player.value.play()
 })
 
 // 表格ref
@@ -488,12 +511,19 @@ onMounted(() => {
 XMLHttpRequest.prototype.nativeOpen = XMLHttpRequest.prototype.open;
 
 XMLHttpRequest.prototype.open = function (method, url, async, user, password) {
-  const pattern1 = 'qdnest.pcs.baidu.com'
-  const pattern2 = 'yqall07.baidupcs.com/video'
+  const pattern1 = '://qdnest.pcs.baidu.com'
+  const pattern2 = '://yqall07.baidupcs.com/video'
   let handledUrl =
-      url.indexOf(pattern1) > -1 || url.indexOf(pattern2) > -1 ?
+      url.indexOf(pattern1) > -1 || url.indexOf(pattern2) > -1 || url.indexOf('v.f230.ts') > -1 ?
+          // url.indexOf(pattern1) > -1 || url.indexOf(pattern2) > -1 ?
           `http://localhost:3101/api/rawProxy?url=${encodeURIComponent(url + '')}` :
           url
+
+  if (url.indexOf('v.f230.ts') > -1) {
+    fetch(url).then(res => {
+      console.log(res.body)
+    })
+  }
   this.nativeOpen(method, handledUrl, async, user, password);
 }
 
