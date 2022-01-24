@@ -165,6 +165,7 @@ module.exports = {
   '.m14': 'application/x-msmediaview',
   '.m15': 'audio/x-mod',
   '.m3u': 'audio/x-mpegurl',
+  '.m3u8': 'application/x-mpegURL',
   '.m3url': 'audio/x-mpegurl',
   '.m4a': 'audio/mp4a-latm',
   '.m4b': 'audio/mp4a-latm',

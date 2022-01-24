@@ -93,6 +93,18 @@
     </el-table>
 
   </el-main>
+
+  <!--  video s -->
+  <video
+      id="video"
+      :style="'position: absolute; z-index: 9999'"
+      class="video-js vjs-default-skin"
+      width="600"
+      height="300"
+      autoplay
+      controls
+      muted
+  />
 </template>
 
 <script setup>
@@ -104,8 +116,25 @@ import {computed, onMounted, reactive, ref, toRaw} from 'vue'
 import {Share, Download, Delete} from '@element-plus/icons-vue'
 import {ElLoading, ElMessage, ElMessageBox} from 'element-plus'
 
+import videojs from 'video.js'
+import 'video.js/dist/video-js.css'
+
 const store = useStore()
 const router = useRouter()
+
+const player = ref(null)
+
+onMounted(() => {
+  //
+  player.value = videojs('video')
+  player.value.src({
+    src: 'http://localhost:3101/public/flv.m3u8',
+    // src: 'https://d2zihajmogu5jn.cloudfront.net/bipbop-advanced/gear2/prog_index.m3u8',
+    type: 'application/x-mpegURL',
+    withCredentials: false
+  })
+  player.value.play()
+})
 
 // 表格ref
 const multipleTableRef = ref(null)
@@ -331,6 +360,8 @@ const cellClick = (rowProxy, column, cell, event) => {
       router.push({
         query: {path: encodeURIComponent(row.path)}
       })
+    } else if (row.category.toString() === '1') {
+      store.dispatch('getStream', row.path)
     } else { // 点击是文件
       doDownloadOne(rowProxy)
     }
@@ -436,6 +467,35 @@ const mkdir = () => {
 onMounted(() => {
   store.commit('setBreadcrumb')
 })
+
+// const property = Object.getOwnPropertyDescriptor(Image.prototype, 'src')
+// const nativeSet = property.set
+//
+// Object.defineProperty(Image.prototype, 'src', {
+//   set: function (url) {
+//     nativeSet.call(this, url);
+//   }
+// })
+// const videoNativeSet = Object.getOwnPropertyDescriptor(HTMLSourceElement.prototype, 'src').set
+//
+// Object.defineProperty(HTMLSourceElement.prototype, 'src', {
+//   set: function (url) {
+//     console.log('video', url)
+//     videoNativeSet.call(this, url);
+//   }
+// })
+
+XMLHttpRequest.prototype.nativeOpen = XMLHttpRequest.prototype.open;
+
+XMLHttpRequest.prototype.open = function (method, url, async, user, password) {
+  const pattern1 = 'qdnest.pcs.baidu.com'
+  const pattern2 = 'yqall07.baidupcs.com/video'
+  let handledUrl =
+      url.indexOf(pattern1) > -1 || url.indexOf(pattern2) > -1 ?
+          `http://localhost:3101/api/rawProxy?url=${encodeURIComponent(url + '')}` :
+          url
+  this.nativeOpen(method, handledUrl, async, user, password);
+}
 
 </script>
 

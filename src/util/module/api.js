@@ -397,19 +397,26 @@ export default class API {
   getStream = (path, adToken = null) => {
     const params = {
       method: 'streaming',
+      // type: 'M3U8_AUTO_480',
       type: 'M3U8_FLV_264_480',
       nom3u8: 1,
       path,
       access_token: accessToken.value
     }
-    if (adToken) params.adToken = adToken
+    if (adToken) {
+      params.adToken = adToken
+      params.nom3u8 = 0
+    }
     return new Promise(resolve => {
       axiosTools.proxy('/proxy', {
         // 当前请求的参数
         params: {
           url: 'https://pan.baidu.com/rest/2.0/xpan/file',
           // 代理的参数
-          params
+          params,
+          headers: {
+            "content-type": 'application/x-mpegURL'
+          }
         }
       }).then(res => resolve(res))
     })

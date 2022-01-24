@@ -222,7 +222,7 @@ export const store = createStore({
     getStream(context, path) {
       return new Promise(resolve => {
         api.getStream(path).then(({adToken}) => {
-          setTimeout(() => api.getStream(path, adToken).then(resM3u8 => resolve(resM3u8)), 6 * 1000)
+          setTimeout(() => api.getStream(path, encodeURIComponent(adToken)).then(resM3u8 => resolve(resM3u8)), 6 * 1000)
         })
       })
     }

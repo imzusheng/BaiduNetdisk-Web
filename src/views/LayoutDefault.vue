@@ -139,10 +139,7 @@ let loadingInstance
 
 onMounted(() => {
   // 全屏加载动画
-  loadingInstance = ElLoading.service({
-    fullscreen: true,
-    text: '正在登录'
-  })
+  loadingInstance = ElLoading.service({fullscreen: true, text: '正在登录'})
 
   // 第一步 获取权限(access_token)
   store.dispatch('getAuth').then(() => {

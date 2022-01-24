@@ -1,4 +1,9 @@
-const express = require("express");
+const express = require("express")
+const path = require("path");
+const querystring = require("querystring")
+const https = require("https")
+const fs = require("fs")
+const axios = require('axios')
 const {
   listLocalFiles,
   openExplorer,
@@ -9,11 +14,6 @@ const {
   taskFilename,
   toolsReadFile
 } = require("../util")
-const path = require("path");
-const querystring = require("querystring")
-const https = require("https")
-const fs = require("fs")
-const axios = require('axios')
 
 axios.defaults.headers['X-Requested-With'] = 'XMLHttpRequest'
 // 请求拦截
@@ -163,12 +163,52 @@ routerApi.get('/proxy', async (req, res) => {
   let result
   
   if (method === 'get') {
-    result = await get(req)
+    result = await get(req, res)
   } else if (method === 'post') {
     result = await fileManagerPost(req)
   }
   
   res.send(result)
+})
+
+// proxy axios版本
+routerApi.get('/rawProxy', async (req, res) => {
+  const {url} = req.query
+  
+  console.log(url)
+  
+  function get() {
+    return new Promise(resolve => {
+      axios
+          .get(url, {
+            headers: {
+              "User-Agent": "pan.baidu.com",
+              // "User-Agent": "nvideo;bNestDisk;1.0.0;Android;9.0;ts",
+              // "Type": "M3U8_AUTO_480"
+            }
+          })
+          .then(res => resolve({
+            error: false,
+            msg: res
+          }))
+          .catch(err => resolve({
+            error: true,
+            msg: err
+          }))
+    })
+  }
+  
+  const result = await get()
+  
+  console.log(result)
+  
+  res.writeHead(200, Object.assign(result.msg.headers, {
+    // 'Content-Type': 'video/MP2T',
+    // 'Content-Type': 'video/x-flv',
+    // 'Connection': 'keep-alive',
+    'ContentDisposition': 'attachment;filename=main.flv',
+  }))
+  res.end(result.msg.data)
 })
 
 // 封装https发送get请求
@@ -184,7 +224,6 @@ function get(req) {
     
     // 拼接url， 将参数加到url后
     const getUrl = url + (params !== undefined ? '?' + querystring.stringify(JSON.parse(params)) : '')
-    
     https.get(decodeURIComponent(getUrl), {headers}, response => {
       response.setEncoding('utf-8')
       let str = ''
@@ -192,7 +231,7 @@ function get(req) {
       response.on('end', () => {
         let result
         try {
-          result = JSON.parse(str)
+          result = typeof str === 'object' ? JSON.parse(str) : str
         } catch (e) {
           console.log(e)
           result = {
