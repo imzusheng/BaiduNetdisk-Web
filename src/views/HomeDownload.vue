@@ -118,7 +118,7 @@ const itemClick = itemData => {
   store.state.download[rawData.fsid].status = 'pending' // 在点击第一次后设置状态为pending，防止在收到服务器响应前重复点击，造成错误
 }
 
-// 取消下载 TODO 取消所有任务需要换个策略,不需要发送路径,只要把json内的curFileSize不为0且不等于total的说明正在下载中
+// 取消下载 发送fsid列表到后台,后台通过fsid查询文件路径
 const cancelDownload = itemData => {
   if (itemData) {
     const {fsid, path} = toRaw(itemData)
@@ -130,10 +130,9 @@ const cancelDownload = itemData => {
       store.dispatch('getLocalFiles')
     })
   } else { // 删除全部任务
-    const filePathList = data.value.map(v => {
+    const filePathList = data.value.map(value => {
       return {
-        path: v.path,
-        fsid: v.fsid
+        fsid: value.fsid
       }
     })
     store.dispatch('deleteDownload', filePathList).then(() => {

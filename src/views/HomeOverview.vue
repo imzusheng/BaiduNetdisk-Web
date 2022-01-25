@@ -186,6 +186,7 @@ const toolsDownload = async () => {
       notDir.push(v)
     }
   })
+  // 是文件夹所以需要遍历子目录文件
   const taskList = isDirPath.map(path => { // 创建Promise队列的参数
     // 递归所有文件夹中的子文件并获取文件信息
     const cb = () => store.dispatch('getMultiFileList', path)
@@ -195,7 +196,9 @@ const toolsDownload = async () => {
       index: path
     }
   })
+  // 执行请求队列
   const promiseQueue = new util.PromiseQueue(taskList, 100)
+  // 获取请求的所有结果
   promiseQueue.getResult().then(res => {
     // res为所有文件信息，包括文件夹。 需要过滤出文件夹，因为文件夹不包含dlink不能直接下载
     let files = []
@@ -245,10 +248,10 @@ function doDownload(fsids) {
       })
 
   // 创建任务队列参数
-  const taskList = fsidsQueue.map((fsidsElement, index) => {
+  const taskList = fsidsQueue.map((fsidsItems, index) => {
     const cb = () => {
       return new Promise(resolve => {
-        store.dispatch('getFileMeta', fsidsElement).then(res => {
+        store.dispatch('getFileMeta', fsidsItems).then(res => {
           if (res?.list instanceof Array) {
             // 添加任务
             store.dispatch('postRecordTasks', res?.list).then(tasksJson => {

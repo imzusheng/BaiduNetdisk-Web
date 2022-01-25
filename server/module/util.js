@@ -154,9 +154,9 @@ const openExplorer = async (uk, filePath, isDir) => {
 const deleteFiles = (filePathList) => {
   for (let i = 0; i < filePathList.length; i++) {
     const filePath = filePathList[i]
-    console.log(filePath)
     if (filePath) {
       const exist = isExist(filePath)
+      console.log(filePath)
       // 文件存在， 删除
       if (exist) fs.rmSync(filePath)
     }
@@ -191,17 +191,19 @@ const handleRecordTasks = async (taskInfo, uk, type) => {
 const deleteDownload = (uk, files) => {
   return new Promise(resolve => {
     const filesParse = files.map(v => typeof v === 'string' ? JSON.parse(v) : v)
-    // 删除文件本身
-    const filePathList = filesParse.map(fileInfo => path.join(path.resolve(), `download/${uk}/`, fileInfo.path))
-    deleteFiles(filePathList)
+    // 删除文件路径列表
+    const filePathList = []
     // tasks_uk.json文件的路径
     const taskFilePath = taskFilename(uk)
     let jsonData = {}
     if (isExist(taskFilePath)) { // tasks_uk.json文件存在, 这里只是删除json的待下载文件信息
       jsonData = toolsReadFile(taskFilePath)
       filesParse.forEach(fileInfo => {
+        filePathList.push(path.join(path.resolve(), `download/${uk}/`, jsonData[fileInfo.fsid].path))
         delete jsonData[fileInfo.fsid]
       })
+      // 删除文件本身
+      deleteFiles(filePathList)
       // 写入回去
       fs.writeFile(taskFilePath, JSON.stringify(jsonData), 'utf8', err => {
         if (err) {
