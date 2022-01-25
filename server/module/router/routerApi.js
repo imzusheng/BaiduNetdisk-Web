@@ -4,6 +4,8 @@ const querystring = require("querystring")
 const https = require("https")
 const fs = require("fs")
 const axios = require('axios')
+const fetch = require('node-fetch')
+
 const {
   listLocalFiles,
   openExplorer,
@@ -18,7 +20,7 @@ const {
 axios.defaults.headers['X-Requested-With'] = 'XMLHttpRequest'
 // 请求拦截
 axios.interceptors.request.use(config => {
-  // console.log(config)
+  console.log(config)
   return config
 })
 
@@ -173,46 +175,70 @@ routerApi.get('/proxy', async (req, res) => {
 
 // proxy axios版本
 routerApi.get('/rawProxy', async (req, res) => {
-  const {url} = req.query
+  const {url, headers = {}} = req.query
   
-  const headers = req.headers
-  delete headers.origin
-  delete headers.referer
-  delete headers.host
+  // fetch
+  fetch(url, {
+    method: 'GET',
+    headers: typeof headers === 'string' ? JSON.parse(headers) : headers
+  }).then(async response => {
+    for await (const chunk of response.body) {
+      res.write(chunk)
+    }
+    res.end()
+  })
   
-  function getAxios() {
-    return new Promise(resolve => {
-      axios
-          .get(url, {
-            headers: Object.assign(headers, {
-              'Connection': 'keep-alive',
-              // "User-Agent": "nvideo;bNestDisk;1.0.0;Windows;10;ts",
-              // "Type": "M3U8_AUTO_480"
-            })
-          })
-          .then(res => resolve({
-            error: false,
-            msg: res
-          }))
-          .catch(err => resolve({
-            error: true,
-            msg: err
-          }))
-    })
-  }
+  // http
+  // https.get(decodeURIComponent(url).replace('http:', 'https:'), {
+  //   headers: Object.assign(headers, {
+  //     "User-Agent": "nvideo;bNestDisk;1.0.0;Windows;10;ts",
+  //     "Type": "M3U8_AUTO_480"
+  //   })
+  // }, response => {
+  //   console.log(response.headers)
+  //   response.on('data', chunk => {
+  //     res.write(chunk)
+  //     console.log('data')
+  //   })
+  //   response.on('end', () => {
+  //     console.log('end')
+  //     res.end()
+  //   })
+  // })
   
-  const result = await getAxios()
+  // const h = {
+  //   'content-type': "application/octet-stream",
+  //   'connection': "keep-alive",
+  //   'cache-control': "max-age=259200",
+  //   'content-length': "192324",
+  //   'content-md5': "2b5bb0b6001b9b5ef44cd09d3ae510ed",
+  //   'superfile': "0",
+  //   'accept-ranges': "bytes",
+  // }
   
-  console.log(result)
-  
-  res.writeHead(200, Object.assign(result.msg.headers, {
-    // 'Connection': 'keep-alive',
-    // 'Access-Control-Allow-Credentials': true,
-    // 'Content-Type': 'video/mp2t'
-  }))
-  
-  // res.write(result.msg.data, 'binary')
-  res.end(result.msg.data)
+  // axios
+  // function getAxios() {
+  //   return new Promise(resolve => {
+  //     axios
+  //         .get(url, {
+  //           headers: Object.assign(headers, {
+  //             "User-Agent": "nvideo;bNestDisk;1.0.0;Windows;10;ts",
+  //             "Type": "M3U8_AUTO_480"
+  //           })
+  //         })
+  //         .then(res => resolve(res))
+  //   })
+  // }
+  //
+  // const result = await getAxios()
+  //
+  // res.writeHead(200, Object.assign(result.headers, {
+  //   // 'Connection': 'keep-alive',
+  //   // 'Access-Control-Allow-Credentials': true,
+  //   // 'Content-Type': 'video/mp2t'
+  // }))
+  //
+  // res.write(result.data, 'binary')
   // res.end()
 })
 

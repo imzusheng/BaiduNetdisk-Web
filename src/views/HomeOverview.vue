@@ -508,23 +508,25 @@ onMounted(() => {
 //   }
 // })
 
+// 拦截原生xhr请求，这里作用是拦截video中source发出的拉取视频流请求
 XMLHttpRequest.prototype.nativeOpen = XMLHttpRequest.prototype.open;
+XMLHttpRequest.prototype.open = function (method, url, async) {
+  const judge_1 = url.indexOf('://qdnest.pcs.baidu.com') > -1
+  const judge_2 = url.indexOf('://yqall07.baidupcs.com/video') > -1
+  const judge_3 = url.indexOf('v.f230.ts') > -1
 
-XMLHttpRequest.prototype.open = function (method, url, async, user, password) {
-  const pattern1 = '://qdnest.pcs.baidu.com'
-  const pattern2 = '://yqall07.baidupcs.com/video'
-  let handledUrl =
-      url.indexOf(pattern1) > -1 || url.indexOf(pattern2) > -1 || url.indexOf('v.f230.ts') > -1 ?
-          // url.indexOf(pattern1) > -1 || url.indexOf(pattern2) > -1 ?
-          `http://localhost:3101/api/rawProxy?url=${encodeURIComponent(url + '')}` :
-          url
+  let handledUrl = url
 
-  if (url.indexOf('v.f230.ts') > -1) {
-    fetch(url).then(res => {
-      console.log(res.body)
+  if (judge_1 || judge_2 || judge_3) {
+    const tempUrl = encodeURIComponent(url + '')
+    const tempHeaders = JSON.stringify({ // 百度网盘视频分片拉取
+      "User-Agent": "nvideo;bNestDisk;1.0.0;Windows;10;ts",
+      "Type": "M3U8_AUTO_480"
     })
+    handledUrl = `http://localhost:3101/api/rawProxy?url=${tempUrl}&headers=${tempHeaders}`
   }
-  this.nativeOpen(method, handledUrl, async, user, password);
+
+  this.nativeOpen(method, handledUrl, async);
 }
 
 </script>
