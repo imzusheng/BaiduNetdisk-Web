@@ -31,7 +31,7 @@ const store = useStore()
 // 视频是否可播放
 const videoCanplay = ref(false)
 // 加载提示文字
-const loadingText = ref('正在加载广告')
+const loadingText = ref('正在加载')
 
 const videoPath = decodeURIComponent(router.currentRoute.value.query?.videoPath.toString())
 const filename = router.currentRoute.value.query?.videoName
@@ -39,15 +39,16 @@ const poster = decodeURIComponent(router.currentRoute.value.query?.videoPoster.t
 
 if (router.currentRoute.value.query?.videoPath) {
   store.dispatch('getStream', videoPath).then(adToken => {
-    let time = 5
-    const timer = setInterval(() => {
-      loadingText.value = `正在跳过广告 剩余${time}s`
-      if (time === 0) {
-        getVideo(adToken)
-        clearInterval(timer)
-      }
-      time--
-    }, 1000)
+    // let time = 1
+    // const timer = setInterval(() => {
+    //   loadingText.value = `正在跳过广告 剩余${time}s`
+    //   if (time === 0) {
+    //     getVideo(adToken)
+    //     clearInterval(timer)
+    //   }
+    //   time--
+    // }, 1000)
+    getVideo(adToken)
   })
 }
 
