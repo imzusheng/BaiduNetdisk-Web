@@ -239,6 +239,7 @@ const pauseDownload = () => {
       .list-item-progress {
         z-index: 2;
         background: rgba(135, 244, 130, .4);
+        transition: all .25s;
       }
 
       .pause {

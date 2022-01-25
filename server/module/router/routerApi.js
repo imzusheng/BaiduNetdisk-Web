@@ -20,7 +20,6 @@ const {
 axios.defaults.headers['X-Requested-With'] = 'XMLHttpRequest'
 // 请求拦截
 axios.interceptors.request.use(config => {
-  // console.log(config)
   return config
 })
 
@@ -148,7 +147,7 @@ routerApi.get('/undoneList', async (req, res) => {
 routerApi.get('/deleteDownload', async (req, res) => {
   const files = req.query.list
   const uk = req.headers?.useruk
-  const result = await deleteDownload(uk, files)
+  const result = await deleteDownload(uk, files).catch(err => console.log(err))
   res.send(result)
 })
 
@@ -194,11 +193,16 @@ routerApi.get('/proxy', async (req, res) => {
       if (typeof response.data === 'string') { // 返回的数据是字符串,则设置标头
         res.writeHead(response.status, response.headers)
         res.end(response.data)
-      }else { // 返回的数据是对象,直接返回json数据
+      } else { // 返回的数据是对象,直接返回json数据
         res.json(response.data)
       }
     }).catch(err => {
-      console.log(err)
+      res.json(err.toJSON())
+      console.error(err, {
+        url,
+        params: JSON.parse(params),
+        headers: tempHeaders
+      })
     })
   } else if (method === 'post') {
     res.send(await fileManagerPost(req))

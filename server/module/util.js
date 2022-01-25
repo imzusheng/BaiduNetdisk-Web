@@ -189,11 +189,11 @@ const handleRecordTasks = async (taskInfo, uk, type) => {
 
 // 删除下载任务
 const deleteDownload = (uk, files) => {
-  const filesParse = files.map(v => typeof v === 'string' ? JSON.parse(v) : v)
-  // 删除文件本身
-  const filePathList = filesParse.map(fileInfo => path.join(path.resolve(), `download/${uk}/`, fileInfo.path))
-  deleteFiles(filePathList)
   return new Promise(resolve => {
+    const filesParse = files.map(v => typeof v === 'string' ? JSON.parse(v) : v)
+    // 删除文件本身
+    const filePathList = filesParse.map(fileInfo => path.join(path.resolve(), `download/${uk}/`, fileInfo.path))
+    deleteFiles(filePathList)
     // tasks_uk.json文件的路径
     const taskFilePath = taskFilename(uk)
     let jsonData = {}

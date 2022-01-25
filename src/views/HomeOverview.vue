@@ -336,7 +336,7 @@ const updateBreadcrumb = index => {
 const doDownloadOne = async fileInfo => {
   const rawFileInfo = toRaw(fileInfo)
   let fsids = []
-  if (rawFileInfo.isdir === 1) {
+  if (rawFileInfo.isdir === 1) { // 选中的是文件夹,需要遍历子目录
     // 全屏加载动画
     const loadingInstance = ElLoading.service({
       fullscreen: true,
@@ -345,8 +345,8 @@ const doDownloadOne = async fileInfo => {
     const res = await store.dispatch('getMultiFileList', rawFileInfo.path)
     fsids = res.list.map(v => v.fs_id)
     loadingInstance.close()
-  } else {
-    fsids.push(rawFileInfo.path)
+  } else { // 选中的是文件
+    fsids.push(rawFileInfo.fs_id)
   }
   ElMessageBox.confirm(
       `

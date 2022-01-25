@@ -14,7 +14,7 @@
         <span>&nbsp;&nbsp;&nbsp;{{ loadingText }}...</span>
       </div>
       <!--  video s -->
-      <div id="videoPlayer" :style="{visibility: !videoCanplay ? 'hidden' : 'visible'}"/>
+      <div id="videoPlayer"/>
     </div>
   </div>
 </template>
