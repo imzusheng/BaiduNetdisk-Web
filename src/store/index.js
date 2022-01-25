@@ -219,11 +219,16 @@ export const store = createStore({
       }
     },
     // 获取视频流-广告
-    getStream(context, path) {
+    getStream({state}, path) {
       return new Promise(resolve => {
-        api.getStream(path).then(({adToken}) => {
-          setTimeout(() => resolve(adToken), 6000)
-        })
+        const fn = () => {
+          api.getStream(path).then(({adToken}) => resolve(adToken))
+        }
+        if (!store.state.auth['access_token']) {
+          state.shelveRequest.push(fn)
+        } else {
+          fn()
+        }
       })
     },
     // 获取m3u8文件的url

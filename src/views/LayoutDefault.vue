@@ -57,8 +57,8 @@
     </el-header>
 
     <el-container>
-      <!--  侧边栏 s  -->
-      <el-aside :class="'home-aside'">
+      <!--  侧边栏 s  视频播放页面(FilePlayer)时,隐藏菜单栏 -->
+      <el-aside v-if="$router.currentRoute.value.name !== 'FilePlayer'" :class="'home-aside'">
         <!--  菜单 s -->
         <el-menu
             :default-active="$router.currentRoute.value.path.replace('/','')"
@@ -148,8 +148,10 @@ onMounted(() => {
       // api需要获取用户唯一标识uk之后才能使用
       store.dispatch('getUserInfo').then(() => {
         loadingInstance.close() // 关闭加载动画
-        store.dispatch('getUndoneList') // 获取未下载完成的任务列表
-        store.dispatch('getLocalFiles') // 获取本地已下载的文件信息
+        if (router.currentRoute.value.name !== 'FilePlayer') { // 如果是视频播放页面,则不用加载
+          store.dispatch('getUndoneList') // 获取未下载完成的任务列表
+          store.dispatch('getLocalFiles') // 获取本地已下载的文件信息
+        }
       })
       // (不需要uk)但需要access_token
       store.dispatch('getQuotaInfo') // 获取配额，容量信息

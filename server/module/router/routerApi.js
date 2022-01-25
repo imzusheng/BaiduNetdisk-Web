@@ -206,38 +206,38 @@ routerApi.get('/proxy', async (req, res) => {
 })
 
 // 封装https发送get请求
-function get(req) {
-  return new Promise(resolve => {
-    const {
-      url,
-      params,
-      headers = {
-        'User-Agent': 'pan.baidu.com'
-      }
-    } = req.query
-    
-    // 拼接url， 将参数加到url后
-    const getUrl = url + (params !== undefined ? '?' + querystring.stringify(JSON.parse(params)) : '')
-    https.get(decodeURIComponent(getUrl), {headers}, response => {
-      response.setEncoding('utf-8')
-      let str = ''
-      response.on('data', data => str += data)
-      response.on('end', () => {
-        let result
-        try {
-          result = typeof str === 'object' ? JSON.parse(str) : str
-        } catch (e) {
-          console.log(e)
-          result = {
-            error: true,
-            data: str
-          }
-        }
-        resolve(result)
-      })
-    })
-  })
-}
+// function get(req) {
+//   return new Promise(resolve => {
+//     const {
+//       url,
+//       params,
+//       headers = {
+//         'User-Agent': 'pan.baidu.com'
+//       }
+//     } = req.query
+//
+//     // 拼接url， 将参数加到url后
+//     const getUrl = url + (params !== undefined ? '?' + querystring.stringify(JSON.parse(params)) : '')
+//     https.get(decodeURIComponent(getUrl), {headers}, response => {
+//       response.setEncoding('utf-8')
+//       let str = ''
+//       response.on('data', data => str += data)
+//       response.on('end', () => {
+//         let result
+//         try {
+//           result = typeof str === 'object' ? JSON.parse(str) : str
+//         } catch (e) {
+//           console.log(e)
+//           result = {
+//             error: true,
+//             data: str
+//           }
+//         }
+//         resolve(result)
+//       })
+//     })
+//   })
+// }
 
 // 文件操作专属方法
 function fileManagerPost(req) {
@@ -319,7 +319,7 @@ routerApi.get('/rawProxy', async (req, res) => {
         }
         res.end()
       })
-      .catch(e => console.log(e))
+      .catch(e => console.log(e, req))
 })
 
 module.exports = routerApi

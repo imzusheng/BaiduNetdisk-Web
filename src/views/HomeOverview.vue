@@ -93,19 +93,6 @@
     </el-table>
 
   </el-main>
-
-  <!--  video s -->
-  <div id="videoPlayer" :style="'position: absolute; z-index: 9999'"></div>
-  <!--  <video-->
-  <!--      id="video"-->
-  <!--      :style="'position: absolute; z-index: 9999'"-->
-  <!--      class="video-js vjs-default-skin"-->
-  <!--      width="600"-->
-  <!--      height="300"-->
-  <!--      autoplay-->
-  <!--      controls-->
-  <!--      muted-->
-  <!--  />-->
 </template>
 
 <script setup>
@@ -116,10 +103,6 @@ import {useRouter} from 'vue-router'
 import {computed, onMounted, reactive, ref, toRaw} from 'vue'
 import {Share, Download, Delete} from '@element-plus/icons-vue'
 import {ElLoading, ElMessage, ElMessageBox} from 'element-plus'
-
-// import Hls from 'hls.js'
-// import DPlayer from 'dplayer'
-
 
 const store = useStore()
 const router = useRouter()
@@ -313,38 +296,12 @@ const cellClick = (rowProxy, column, cell, event) => {
       let routeData = router.resolve({
         path: '/player',
         query: {
-          videoPath: row.path
+          videoName: row.server_filename,
+          videoPoster: encodeURIComponent(row.thumbs.url3),
+          videoPath: encodeURIComponent(row.path)
         }
       })
       window.open(routeData.href, '_blank')
-      // store.dispatch('getStream', row.path).then(adToken => {
-      //   store.dispatch('getStreamUrl', {path: row.path, adToken}).then(m3u8Url => {
-      //     const dp = new DPlayer({
-      //       container: document.getElementById('videoPlayer'),
-      //       video: {
-      //         // url: 'http://localhost:3101/public/ts.m3u8',
-      //         // url: 'http://1257120875.vod2.myqcloud.com/0ef121cdvodtransgzp1257120875/3055695e5285890780828799271/v.f230.m3u8',
-      //         url: m3u8Url,
-      //         type: 'customHls',
-      //         customType: {
-      //           customHls: function (video) {
-      //             const hls = new Hls()
-      //             hls.on(Hls.Events.ERROR, function (event, data) {
-      //               const errorType = data.type;
-      //               const errorDetails = data.details;
-      //               const errorFatal = data.fatal;
-      //               console.log(errorType, errorDetails, errorFatal)
-      //             });
-      //             hls.loadSource(video.src)
-      //             hls.attachMedia(video)
-      //             // video.play()
-      //           },
-      //         },
-      //       },
-      //     })
-      //     console.log(dp)
-      //   })
-      // })
     } else { // 点击是文件
       doDownloadOne(rowProxy)
     }
@@ -450,44 +407,6 @@ const mkdir = () => {
 onMounted(() => {
   store.commit('setBreadcrumb')
 })
-
-// const property = Object.getOwnPropertyDescriptor(Image.prototype, 'src')
-// const nativeSet = property.set
-//
-// Object.defineProperty(Image.prototype, 'src', {
-//   set: function (url) {
-//     nativeSet.call(this, url);
-//   }
-// })
-// const videoNativeSet = Object.getOwnPropertyDescriptor(HTMLSourceElement.prototype, 'src').set
-//
-// Object.defineProperty(HTMLSourceElement.prototype, 'src', {
-//   set: function (url) {
-//     console.log('video', url)
-//     videoNativeSet.call(this, url);
-//   }
-// })
-
-// 拦截原生xhr请求，这里作用是拦截video中source发出的拉取视频流请求
-XMLHttpRequest.prototype.nativeOpen = XMLHttpRequest.prototype.open;
-XMLHttpRequest.prototype.open = function (method, url, async) {
-  const judge_1 = url.indexOf('://qdnest.pcs.baidu.com') > -1
-  const judge_2 = url.indexOf('://yqall07.baidupcs.com/video') > -1
-  const judge_3 = url.indexOf('v.f230.ts') > -1
-
-  let handledUrl = url
-
-  if (judge_1 || judge_2 || judge_3) {
-    const tempUrl = encodeURIComponent(url + '')
-    const tempHeaders = JSON.stringify({ // 百度网盘视频分片拉取
-      "User-Agent": "nvideo;bNestDisk;1.0.0;Windows;10;ts",
-      "Type": "M3U8_AUTO_480"
-    })
-    handledUrl = `http://localhost:3101/api/rawProxy?mergeHeaders=0&url=${tempUrl}&headers=${tempHeaders}`
-  }
-
-  this.nativeOpen(method, handledUrl, async);
-}
 
 </script>
 

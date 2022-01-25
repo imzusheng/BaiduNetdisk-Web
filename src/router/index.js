@@ -19,6 +19,7 @@ const routes = [
           keepalive: true
         }
       },
+      // 文件分类页面,页面都是HomeView
       ...['imagelist', 'videolist', 'doclist', 'btlist'].map(path => {
         return {
           path: `/${path}`,
@@ -41,6 +42,14 @@ const routes = [
         path: '/transmit',
         name: 'HomeTransmit',
         component: () => import(/* webpackChunkName: "home" */ '../views/HomeTransmit.vue'),
+        meta: {
+          keepalive: true
+        }
+      },
+      {
+        path: '/player',
+        name: 'FilePlayer',
+        component: () => import(/* webpackChunkName: "home" */ '../views/FilePlayer.vue'),
         meta: {
           keepalive: true
         }
