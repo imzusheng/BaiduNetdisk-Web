@@ -10,10 +10,15 @@
   <el-container :id="'HomeOverview'">
 
     <el-header :class="'home-header'">
-      <!--  头像信息 s -->
-      <div class="home-header-avatar">
-        <el-avatar :size="36" :src="userInfo.avatar_url"/>
-        <span class="header-avatar-name">
+      <div>
+        <!--   开关 s   -->
+        <div class="drawer-switch user-select-not" @click="menuShow = !menuShow" v-if="$router.currentRoute.value.name !== 'FilePlayer'">
+          <Menu style="height: 36px; width: 36px;" :style="{color: menuShow ? '#ccc': 'rgba(64,158,255, .8)'}"/>
+        </div>
+        <!--  头像信息 s -->
+        <div class="home-header-avatar">
+          <el-avatar :size="36" :src="userInfo.avatar_url"/>
+          <span class="header-avatar-name">
             {{ userInfo.baidu_name }}
           <span class="header-vip-type">
             {{
@@ -34,6 +39,7 @@
             </el-popconfirm>
           </span>
         </span>
+        </div>
       </div>
       <!--   搜索栏 s  -->
       <div class="home-header-search" v-if="$router.currentRoute.value.name === 'HomeOverview'">
@@ -57,8 +63,20 @@
     </el-header>
 
     <el-container>
-      <!--  侧边栏 s  视频播放页面(FilePlayer)时,隐藏菜单栏 -->
-      <el-aside v-if="$router.currentRoute.value.name !== 'FilePlayer'" :class="'home-aside'">
+
+      <el-drawer
+          v-if="$router.currentRoute.value.name !== 'FilePlayer'"
+          direction="ltr"
+          :modal="false"
+          :modal-class="'drawer-modal'"
+          :close-on-click-modal="false"
+          :close-on-press-escape="false"
+          :lock-scroll="false"
+          :show-close="false"
+          :z-index="3"
+          :size="'300px'"
+          v-model="menuShow"
+          :with-header="false">
         <!--  菜单 s -->
         <el-menu
             :default-active="$router.currentRoute.value.path.replace('/','')"
@@ -100,15 +118,14 @@
             <span>已下载（{{ localFilesSum }}）</span>
           </el-menu-item>
         </el-menu>
-        <!--  菜单 e -->
         <!--  配额 s  -->
         <div class="home-aside-quota">
           <el-progress :text-inside="true" :stroke-width="26" :percentage="parseInt(quotaInfo.rate) || 0"/>
           <span>{{ quotaInfo.used }}/{{ quotaInfo.total }}</span>
         </div>
-        <!--  配额 e  -->
-      </el-aside>
-      <!--  侧边栏 e  -->
+      </el-drawer>
+
+      <div style="width: 300px; min-width: 300px" v-if="menuShow && $router.currentRoute.value.name !== 'FilePlayer'"></div>
 
       <!-- 路由主内容 s -->
       <router-view v-if="$router.currentRoute.value.meta.keepalive" v-slot="{ Component }">
@@ -125,7 +142,7 @@
 
 <script setup>
 import {computed, onMounted, ref} from 'vue'
-import {House, Download, Odometer, Search, Tickets} from '@element-plus/icons-vue'
+import {House, Download, Odometer, Search, Tickets, Menu} from '@element-plus/icons-vue'
 import {useStore} from "vuex"
 import {useRouter} from "vue-router"
 import {ElLoading} from 'element-plus'
@@ -133,6 +150,7 @@ import AuthPanel from '@/components/AuthPanel'
 
 const store = useStore()
 const router = useRouter()
+const menuShow = ref(true)
 
 // 全屏加载动画
 let loadingInstance
@@ -204,6 +222,62 @@ const logout = () => {
 </script>
 
 <style lang="less">
+// 抽屉
+.drawer-modal {
+  width: 300px;
+
+  .el-drawer {
+    box-shadow: 2px 2px 8px rgba(100, 100, 100, 0.1), 0 0 8px #fff;
+    overflow: inherit;
+    transition: none !important;
+
+    .el-drawer__body {
+      overflow: inherit !important;
+      padding: 60px 0 0 !important;
+      display: flex;
+      overflow: hidden;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+
+      //菜单
+      .home-aside-menu {
+        flex: 1;
+        border: none !important;
+        background: transparent;
+        margin-top: 12px;
+
+        .el-badge__content {
+          top: 50%;
+          transform: translate(170%, -55%);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+
+        .is-active {
+          svg {
+            color: #409eff;
+          }
+        }
+      }
+
+      // 剩余配额
+      .home-aside-quota {
+        margin: 20px;
+
+        > span {
+          font-size: 13px;
+          text-align: right;
+          display: block;
+          color: #999;
+          padding: 12px 0 0;
+        }
+      }
+    }
+  }
+}
+
 .el-loading-spinner {
   .el-loading-text {
     text-align: center;
@@ -217,16 +291,43 @@ const logout = () => {
   // 头部
   .home-header {
     width: 100%;
-    z-index: 2;
+    z-index: 4;
     display: flex;
+    align-items: center;
     justify-content: space-between;
     box-shadow: 2px 2px 8px rgba(100, 100, 100, .1),
     0 0 8px #fff;
+    background: #ffffff;
+    position: relative;
+
+    > div {
+      display: flex;
+    }
+
+    // 开关
+    .drawer-switch {
+      height: 40px;
+      width: 40px;
+      min-width: 40px;
+      min-height: 40px;
+      cursor: pointer;
+      margin-right: 30px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      > svg {
+        &:hover {
+          color: rgba(64, 158, 255, 1) !important;
+        }
+      }
+    }
 
     // 头像
     .home-header-avatar {
       display: flex;
       align-items: center;
+      margin-right: 30px;
 
       .header-avatar-name {
         margin-left: 16px;
@@ -292,7 +393,7 @@ const logout = () => {
       //菜单
       .home-aside-menu {
         flex: 1;
-        border: none;
+        border: none !important;
         background: transparent;
         margin-top: 12px;
 

@@ -139,7 +139,11 @@ const handleSelectionChange = e => {
 }
 
 // 分享
-const toolsShare = () => ElMessage.warning('暂未开放分享功能')
+const toolsShare = () => ElMessage({
+  message: '暂未开放该功能',
+  type: 'warning',
+  grouping: true
+})
 
 // 删除文件
 const toolsDelete = () => {
@@ -397,14 +401,18 @@ const doDeleteOne = fileInfo => {
 }
 
 // 上传文件
-const upload = () => {
-  ElMessage.warning('暂未开通该功能')
-}
+const upload = () => ElMessage({
+  message: '暂未开放该功能',
+  type: 'warning',
+  grouping: true
+})
 
 // 新建文件夹
-const mkdir = () => {
-  ElMessage.warning('暂未开通该功能')
-}
+const mkdir = () => ElMessage({
+  message: '暂未开放该功能',
+  type: 'warning',
+  grouping: true
+})
 
 // 更新面包屑
 onMounted(() => {
