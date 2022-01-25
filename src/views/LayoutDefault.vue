@@ -12,8 +12,9 @@
     <el-header :class="'home-header'">
       <div>
         <!--   开关 s   -->
-        <div class="drawer-switch user-select-not" @click="menuShow = !menuShow" v-if="$router.currentRoute.value.name !== 'FilePlayer'">
-          <Menu style="height: 36px; width: 36px;" :style="{color: menuShow ? '#ccc': 'rgba(64,158,255, .8)'}"/>
+        <div class="drawer-switch user-select-not" @click="menuShow = !menuShow"
+             v-if="$router.currentRoute.value.name !== 'FilePlayer'">
+          <Menu style="height: 32px; width: 32px;" :style="{color: menuShow ? '#f2f2f2': '#ccc'}"/>
         </div>
         <!--  头像信息 s -->
         <div class="home-header-avatar">
@@ -80,7 +81,7 @@
         <!--  菜单 s -->
         <el-menu
             :default-active="$router.currentRoute.value.path.replace('/','')"
-            :class="'home-aside-menu'"
+            :class="'home-aside-menu user-select-not'"
             class="el-menu-vertical-demo"
             @select="menuSelect"
             mode="vertical">
@@ -125,7 +126,8 @@
         </div>
       </el-drawer>
 
-      <div style="width: 300px; min-width: 300px" v-if="menuShow && $router.currentRoute.value.name !== 'FilePlayer'"></div>
+      <!--  占位div s    -->
+      <div class="menu-perch" v-if="menuShow && $router.currentRoute.value.name !== 'FilePlayer'"/>
 
       <!-- 路由主内容 s -->
       <router-view v-if="$router.currentRoute.value.meta.keepalive" v-slot="{ Component }">
@@ -134,6 +136,7 @@
         </keep-alive>
       </router-view>
       <!-- 路由主内容 e -->
+
     </el-container>
 
   </el-container>
@@ -360,12 +363,37 @@ const logout = () => {
       }
 
       > .el-input {
-        border-radius: 20px;
+        border-radius: 4px;
         overflow: hidden;
-        border: 1px solid #dcdfe6;
+        //border: 1px solid #dcdfe6;
 
         div, .el-input__inner {
           border: none;
+        }
+
+        .el-input__inner {
+          background: rgba(240, 240, 240, .2);
+        }
+      }
+    }
+
+    @media screen and (max-width: 768px) {
+      & {
+        padding: 6px 12px;
+        height: auto;
+        flex-wrap: wrap;
+
+        > div {
+          width: 100%;
+          justify-content: space-between;
+
+          .home-header-avatar {
+            margin: 0;
+          }
+        }
+
+        .home-header-search {
+          display: none;
         }
       }
     }
@@ -373,60 +401,18 @@ const logout = () => {
 
   // 内容
   .el-container {
-
-    // 侧边栏
-    .home-aside {
+    .menu-perch {
       width: 300px;
-      display: flex;
-      overflow: hidden;
-      flex-direction: column;
-      justify-content: space-between;
-      box-shadow: 2px 2px 8px rgba(100, 100, 100, .1),
-      0 0 8px #fff;
-
-      // 菜单折叠按钮
-      .home-aside-collapse {
-        padding: 20px;
-        border-bottom: 1px solid rgba(100, 100, 100, .1);
-      }
-
-      //菜单
-      .home-aside-menu {
-        flex: 1;
-        border: none !important;
-        background: transparent;
-        margin-top: 12px;
-
-        .el-badge__content {
-          top: 50%;
-          transform: translate(170%, -55%);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
-
-        .is-active {
-          svg {
-            color: #409eff;
-          }
-        }
-      }
-
-      // 剩余配额
-      .home-aside-quota {
-        margin: 20px;
-
-        > span {
-          font-size: 13px;
-          text-align: right;
-          display: block;
-          color: #999;
-          padding: 12px 0 0;
-        }
-      }
-
+      min-width: 300px
     }
+  }
 
+  @media screen and (max-width: 768px) {
+    .el-container {
+      .menu-perch {
+        display: none;
+      }
+    }
   }
 }
 </style>
