@@ -98,7 +98,7 @@ export default class API {
               start: 0,
               limit: 100,
               desc: null,
-              'access_token': accessToken.value,
+              access_token: accessToken.value,
               dir: path || '/'
             }
           }
@@ -395,30 +395,28 @@ export default class API {
   
   // 获取视频流
   getStream = (path, adToken = null) => {
-    const params = {
-      method: 'streaming',
-      type: 'M3U8_AUTO_480',
-      // type: 'M3U8_FLV_264_480',
-      nom3u8: 1,
-      path,
-      access_token: accessToken.value
+    const opts = {
+      params: {
+        url: 'https://pan.baidu.com/rest/2.0/xpan/file',
+        params: {
+          method: 'streaming',
+          type: 'M3U8_AUTO_480', // ts
+          // type: 'M3U8_FLV_264_480', // flv
+          nom3u8: 1,
+          path,
+          access_token: accessToken.value
+        },
+        mergeHeaders: '0'
+      },
+      headers: {}
     }
     if (adToken) {
-      params.adToken = adToken
-      params.nom3u8 = 0
+      // opts.params.params.adToken = decodeURIComponent(adToken)
+      opts.params.params.adToken = encodeURIComponent(adToken)
+      opts.params.params.nom3u8 = 0
+      opts.headers["Content-Type"] = 'application/x-mpegURL'
+      return new Promise(resolve => resolve(decodeURIComponent(`http://localhost:3101/api/proxy?url=https://pan.baidu.com/rest/2.0/xpan/file&params=${JSON.stringify(opts.params.params)}`)))
     }
-    return new Promise(resolve => {
-      axiosTools.proxy('/proxy', {
-        // 当前请求的参数
-        params: {
-          url: 'https://pan.baidu.com/rest/2.0/xpan/file',
-          // 代理的参数
-          params,
-          headers: {
-            "content-type": 'application/x-mpegURL'
-          }
-        }
-      }).then(res => resolve(res))
-    })
+    return axiosTools.proxy('/proxy', opts)
   }
 }

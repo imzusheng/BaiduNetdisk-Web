@@ -20,7 +20,7 @@ const {
 axios.defaults.headers['X-Requested-With'] = 'XMLHttpRequest'
 // 请求拦截
 axios.interceptors.request.use(config => {
-  console.log(config)
+  // console.log(config)
   return config
 })
 
@@ -160,86 +160,49 @@ routerApi.post('/recordTasks', async (req, res) => {
 
 // proxy https版本
 routerApi.get('/proxy', async (req, res) => {
-  const {method = 'get'} = req.query
+  const {
+    url,
+    params = '{}',
+    method = 'get',
+    mergeHeaders = '0',
+    headers = {
+      'User-Agent': 'pan.baidu.com'
+    }
+  } = req.query
   
-  let result
+  // 解析url中的headers
+  let tempHeaders = typeof headers === 'string' ? JSON.parse(headers) : headers
   
-  if (method === 'get') {
-    result = await get(req, res)
-  } else if (method === 'post') {
-    result = await fileManagerPost(req)
+  // 是否合并浏览器请求头
+  if (mergeHeaders === '1') {
+    const reqHeaders = req.headers
+    delete reqHeaders.referer
+    delete reqHeaders.origin
+    delete reqHeaders.host
+    tempHeaders = Object.assign(reqHeaders, tempHeaders)
   }
   
-  res.send(result)
-})
-
-// proxy axios版本
-routerApi.get('/rawProxy', async (req, res) => {
-  const {url, headers = {}} = req.query
-  
-  // fetch
-  fetch(url, {
-    method: 'GET',
-    headers: typeof headers === 'string' ? JSON.parse(headers) : headers
-  }).then(async response => {
-    for await (const chunk of response.body) {
-      res.write(chunk)
-    }
-    res.end()
-  })
-  
-  // http
-  // https.get(decodeURIComponent(url).replace('http:', 'https:'), {
-  //   headers: Object.assign(headers, {
-  //     "User-Agent": "nvideo;bNestDisk;1.0.0;Windows;10;ts",
-  //     "Type": "M3U8_AUTO_480"
-  //   })
-  // }, response => {
-  //   console.log(response.headers)
-  //   response.on('data', chunk => {
-  //     res.write(chunk)
-  //     console.log('data')
-  //   })
-  //   response.on('end', () => {
-  //     console.log('end')
-  //     res.end()
-  //   })
-  // })
-  
-  // const h = {
-  //   'content-type': "application/octet-stream",
-  //   'connection': "keep-alive",
-  //   'cache-control': "max-age=259200",
-  //   'content-length': "192324",
-  //   'content-md5': "2b5bb0b6001b9b5ef44cd09d3ae510ed",
-  //   'superfile': "0",
-  //   'accept-ranges': "bytes",
-  // }
-  
-  // axios
-  // function getAxios() {
-  //   return new Promise(resolve => {
-  //     axios
-  //         .get(url, {
-  //           headers: Object.assign(headers, {
-  //             "User-Agent": "nvideo;bNestDisk;1.0.0;Windows;10;ts",
-  //             "Type": "M3U8_AUTO_480"
-  //           })
-  //         })
-  //         .then(res => resolve(res))
-  //   })
-  // }
-  //
-  // const result = await getAxios()
-  //
-  // res.writeHead(200, Object.assign(result.headers, {
-  //   // 'Connection': 'keep-alive',
-  //   // 'Access-Control-Allow-Credentials': true,
-  //   // 'Content-Type': 'video/mp2t'
-  // }))
-  //
-  // res.write(result.data, 'binary')
-  // res.end()
+  if (method === 'get') {
+    // res.send(await get(req))
+    axios.get(
+        url,
+        {
+          params: JSON.parse(params),
+          headers: tempHeaders
+        }
+    ).then(response => {
+      if (typeof response.data === 'string') { // 返回的数据是字符串,则设置标头
+        res.writeHead(response.status, response.headers)
+        res.end(response.data)
+      }else { // 返回的数据是对象,直接返回json数据
+        res.json(response.data)
+      }
+    }).catch(err => {
+      console.log(err)
+    })
+  } else if (method === 'post') {
+    res.send(await fileManagerPost(req))
+  }
 })
 
 // 封装https发送get请求
@@ -326,6 +289,38 @@ function fileManagerPost(req) {
     
   })
 }
+
+/**
+ * 代理
+ * url 代理的url
+ * headers 需要添加的头部
+ * mergeHeaders 是否合并浏览器请求头部
+ */
+routerApi.get('/rawProxy', async (req, res) => {
+  const {url, headers = '{}', mergeHeaders = '0'} = req.query
+  // 解析url中的headers
+  let tempHeaders = typeof headers === 'string' ? JSON.parse(headers) : headers
+  // 是否合并浏览器请求头
+  if (mergeHeaders === '1') {
+    const reqHeaders = req.headers
+    delete reqHeaders.referer
+    delete reqHeaders.origin
+    delete reqHeaders.host
+    tempHeaders = Object.assign(reqHeaders, tempHeaders)
+  }
+  // fetch
+  fetch(url, {
+    method: 'GET',
+    headers: tempHeaders
+  })
+      .then(async response => {
+        for await (const chunk of response.body) {
+          res.write(chunk)
+        }
+        res.end()
+      })
+      .catch(e => console.log(e))
+})
 
 module.exports = routerApi
 

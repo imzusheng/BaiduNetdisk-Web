@@ -218,13 +218,17 @@ export const store = createStore({
         fn()
       }
     },
-    // 获取视频流
+    // 获取视频流-广告
     getStream(context, path) {
       return new Promise(resolve => {
         api.getStream(path).then(({adToken}) => {
-          setTimeout(() => api.getStream(path, encodeURIComponent(adToken)).then(resM3u8 => resolve(resM3u8)), 6 * 1000)
+          setTimeout(() => resolve(adToken), 6000)
         })
       })
+    },
+    // 获取m3u8文件的url
+    getStreamUrl(content, {path, adToken}) {
+      return api.getStream(path, encodeURIComponent(adToken))
     }
   },
   modules: {}

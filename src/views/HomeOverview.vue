@@ -117,47 +117,12 @@ import {computed, onMounted, reactive, ref, toRaw} from 'vue'
 import {Share, Download, Delete} from '@element-plus/icons-vue'
 import {ElLoading, ElMessage, ElMessageBox} from 'element-plus'
 
-import Hls from 'hls.js'
-import DPlayer from 'dplayer'
+// import Hls from 'hls.js'
+// import DPlayer from 'dplayer'
 
 
 const store = useStore()
 const router = useRouter()
-
-onMounted(() => {
-  const dp = new DPlayer({
-    container: document.getElementById('videoPlayer'),
-    video: {
-      // url: 'http://localhost:3101/public/ts.m3u8',
-      url: 'http://1257120875.vod2.myqcloud.com/0ef121cdvodtransgzp1257120875/3055695e5285890780828799271/v.f230.m3u8',
-      type: 'customHls',
-      customType: {
-        customHls: function (video) {
-          const hls = new Hls()
-          hls.on(Hls.Events.ERROR, function (event, data) {
-            const errorType = data.type;
-            const errorDetails = data.details;
-            const errorFatal = data.fatal;
-            console.log(errorType, errorDetails, errorFatal)
-          });
-          hls.loadSource(video.src)
-          hls.attachMedia(video)
-          // video.play()
-        },
-      },
-    },
-  })
-  console.log(dp)
-  //
-  // player.value = videojs('video')
-  // player.value.src({
-  //   src: 'http://localhost:3101/public/flv.m3u8',
-  //   // src: 'https://d2zihajmogu5jn.cloudfront.net/bipbop-advanced/gear2/prog_index.m3u8',
-  //   type: 'application/x-mpegURL',
-  //   withCredentials: false
-  // })
-  // player.value.play()
-})
 
 // 表格ref
 const multipleTableRef = ref(null)
@@ -334,45 +299,6 @@ const clearData = () => {
   tableData.value.push(...new Array(length).fill({}))
 }
 
-// 表格行被点击
-// const rowClick = () => {
-// const rowData = toRaw(e)
-// // 是否是文件夹 1 是, 0 否
-// const isDir = rowData.isdir
-// if (isDir === 1) {
-//   clearData()
-//   // 加载状态
-//   store.state.fileListLoading = true
-//   router.push({
-//     query: {
-//       path: encodeURIComponent(rowData.path)
-//     }
-//   })
-// } else {
-//   // 下载文件 TODO 有时候会下载一个无名文件d，很奇怪 有时间给服务器搞个日志好了
-//   const filenameList = Object.values(toRaw(store.state.download)).map(v => v.filename)
-//   const existsFileList = [...toRaw(store.state.listLocalFiles).map(v => v.rawFilename)]
-//   if (filenameList.length > 3) {
-//     return ElMessage({
-//       type: 'info',
-//       message: '当前任务数大于3，再等等'
-//     })
-//   } else if (existsFileList.includes(rowData.server_filename)) {
-//     return ElMessage({
-//       type: 'info',
-//       message: '请勿重复下载'
-//     })
-//   }
-//   ElMessage({
-//     type: 'info',
-//     message: '正在加入下载队列...'
-//   })
-//   api.getFileMeta([rowData.fs_id]).then(res => {
-//     api.getDownload(res.list[0].dlink, res.list[0].filename, rowData.fs_id)
-//   })
-// }
-// }
-
 // 点击了单元格
 const cellClick = (rowProxy, column, cell, event) => {
   const row = toRaw(rowProxy)
@@ -384,7 +310,41 @@ const cellClick = (rowProxy, column, cell, event) => {
         query: {path: encodeURIComponent(row.path)}
       })
     } else if (row.category.toString() === '1') {
-      store.dispatch('getStream', row.path)
+      let routeData = router.resolve({
+        path: '/player',
+        query: {
+          videoPath: row.path
+        }
+      })
+      window.open(routeData.href, '_blank')
+      // store.dispatch('getStream', row.path).then(adToken => {
+      //   store.dispatch('getStreamUrl', {path: row.path, adToken}).then(m3u8Url => {
+      //     const dp = new DPlayer({
+      //       container: document.getElementById('videoPlayer'),
+      //       video: {
+      //         // url: 'http://localhost:3101/public/ts.m3u8',
+      //         // url: 'http://1257120875.vod2.myqcloud.com/0ef121cdvodtransgzp1257120875/3055695e5285890780828799271/v.f230.m3u8',
+      //         url: m3u8Url,
+      //         type: 'customHls',
+      //         customType: {
+      //           customHls: function (video) {
+      //             const hls = new Hls()
+      //             hls.on(Hls.Events.ERROR, function (event, data) {
+      //               const errorType = data.type;
+      //               const errorDetails = data.details;
+      //               const errorFatal = data.fatal;
+      //               console.log(errorType, errorDetails, errorFatal)
+      //             });
+      //             hls.loadSource(video.src)
+      //             hls.attachMedia(video)
+      //             // video.play()
+      //           },
+      //         },
+      //       },
+      //     })
+      //     console.log(dp)
+      //   })
+      // })
     } else { // 点击是文件
       doDownloadOne(rowProxy)
     }
@@ -523,7 +483,7 @@ XMLHttpRequest.prototype.open = function (method, url, async) {
       "User-Agent": "nvideo;bNestDisk;1.0.0;Windows;10;ts",
       "Type": "M3U8_AUTO_480"
     })
-    handledUrl = `http://localhost:3101/api/rawProxy?url=${tempUrl}&headers=${tempHeaders}`
+    handledUrl = `http://localhost:3101/api/rawProxy?mergeHeaders=0&url=${tempUrl}&headers=${tempHeaders}`
   }
 
   this.nativeOpen(method, handledUrl, async);
