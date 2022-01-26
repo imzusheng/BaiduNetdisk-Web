@@ -33,8 +33,8 @@
                 @confirm="logout"
             >
               <template #reference>
-                <el-button size="small">
-                  <span style="color: #409eff; cursor: pointer">退出登录</span>
+                <el-button type="primary" color="#626aef" :icon="Close" size="small">
+                  退出登录
                 </el-button>
               </template>
             </el-popconfirm>
@@ -145,7 +145,7 @@
 
 <script setup>
 import {computed, onMounted, ref} from 'vue'
-import {House, Download, Odometer, Search, Tickets, Menu} from '@element-plus/icons-vue'
+import {House, Download, Odometer, Search, Tickets, Menu, Close} from '@element-plus/icons-vue'
 import {useStore} from "vuex"
 import {useRouter} from "vue-router"
 import {ElLoading} from 'element-plus'
@@ -299,10 +299,10 @@ const logout = () => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    box-shadow: 2px 2px 8px rgba(100, 100, 100, .1),
-    0 0 8px #fff;
-    background: #fff;
     position: relative;
+    background: rgba(30, 30, 30, 1);
+    //box-shadow: 2px 2px 8px rgba(100, 100, 100, .1), 0 0 8px #fff;
+    //background: #fff;
 
     > div {
       display: flex;
@@ -336,6 +336,8 @@ const logout = () => {
       .header-avatar-name {
         margin-left: 16px;
         font-size: 14px;
+        color: rgba(190, 190, 190, 1);
+        font-weight: bold;
       }
 
       .header-vip-type {
