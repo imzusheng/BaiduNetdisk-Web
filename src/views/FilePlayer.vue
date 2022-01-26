@@ -33,9 +33,11 @@ const videoCanplay = ref(false)
 // 加载提示文字
 const loadingText = ref('正在加载')
 
+const poster = decodeURIComponent(router.currentRoute.value.query?.videoPoster.toString())
 const videoPath = decodeURIComponent(router.currentRoute.value.query?.videoPath.toString())
 const filename = router.currentRoute.value.query?.videoName
-const poster = decodeURIComponent(router.currentRoute.value.query?.videoPoster.toString())
+
+console.log(videoPath.replace('/' + filename, ''))
 
 if (router.currentRoute.value.query?.videoPath) {
   store.dispatch('getStream', videoPath).then(adToken => {
@@ -48,7 +50,8 @@ if (router.currentRoute.value.query?.videoPath) {
     //   }
     //   time--
     // }, 1000)
-    getVideo(adToken)
+    if (!adToken) getVideo(' ')
+    else getVideo(adToken)
   })
 }
 
