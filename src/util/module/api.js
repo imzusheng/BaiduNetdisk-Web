@@ -369,8 +369,8 @@ export default class API {
     })
   }
   
-  // 获取文件-图片
-  getFileCategory = ({path = '/', category}) => {
+  // 获取文件-分类
+  getFileCategory = ({path = '/', category, order = 'time'}) => {
     return new Promise(resolve => {
       axiosTools.proxy('/proxy', {
         // 当前请求的参数
@@ -382,7 +382,7 @@ export default class API {
             parent_path: path,
             recursion: 1, // 是否递归
             web: 1, // 略缩图
-            order: 'time', // 默认按时间排序
+            order, // 默认按时间排序
             desc: 1, // 升降序
             // page: 1, // 如果不指定页码，则为不分页模式
             num: 100, // 每页文件数

@@ -207,6 +207,7 @@ export const store = createStore({
     },
     // 获取文件-分类图片
     getFileCategory({commit, state}, payload) {
+      // refresh是获取完数据之后是否要执行 commit('setFilesList', {list: res.info})
       const fn = () => {
         api.getFileCategory(payload).then(res => {
           commit('setFilesList', {list: res.info})

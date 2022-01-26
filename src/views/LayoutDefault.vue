@@ -301,7 +301,7 @@ const logout = () => {
     justify-content: space-between;
     box-shadow: 2px 2px 8px rgba(100, 100, 100, .1),
     0 0 8px #fff;
-    background: #ffffff;
+    background: #fff;
     position: relative;
 
     > div {
