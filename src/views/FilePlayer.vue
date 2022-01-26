@@ -58,6 +58,7 @@ function getVideo(adToken) {
     loadingText.value = '正在加载视频, 就快好了'
     const dp = new DPlayer({
       container: document.getElementById('videoPlayer'),
+      playbackSpeed: [0.5, 0.75, 1, 1.25, 1.5, 2, 3],
       video: {
         pic: poster,
         // url: 'http://localhost:3101/public/ts.m3u8',
@@ -110,7 +111,7 @@ XMLHttpRequest.prototype.open = function (method, url, async) {
 
   let handledUrl = url
 
-  if (url.indexOf('http://localhost:3101') === -1) {
+  if (url.indexOf('my-streaming') > -1) {
     const tempUrl = encodeURIComponent(url + '')
     const tempHeaders = JSON.stringify({ // 百度网盘视频分片拉取
       "User-Agent": "nvideo;bNestDisk;1.0.0;Windows;10;ts",

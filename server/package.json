@@ -8,8 +8,7 @@
   },
   "nodemonConfig": {
     "watch": [
-      "*.js",
-      "auth.json"
+      "*.js"
     ]
   },
   "author": "",

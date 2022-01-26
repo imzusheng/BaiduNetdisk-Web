@@ -7,7 +7,7 @@
 
   <AuthPanel :dialogVisible="false"/>
 
-  <el-container :id="'HomeOverview'">
+  <el-container :id="'HomeOverview'" :style="{filter: store.state.dialogVisible ? 'blur(10px)' : 'none'}">
 
     <el-header :class="'home-header'">
       <div>
@@ -179,6 +179,7 @@ onMounted(() => {
       // 处理搁置的请求
       store.dispatch('shelveGet')
     } else {
+      loadingInstance.close() // 关闭加载动画
       store.state.dialogVisible = true
     }
   })

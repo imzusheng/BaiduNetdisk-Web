@@ -56,19 +56,21 @@ routerApi.post('/accessToken', async (req, res) => {
   
   // 写入token到auth.json
   function writeJson(data) {
-    const jsonPath = path.join(__dirname, '../auth.json')
+    const jsonPath = path.join(path.resolve(), 'auth.json')
     return new Promise(resolve => {
       // 是否存在json文件
       const exist = isExist(jsonPath)
       let jsonData
       if (exist) { // 存在则引入
-        jsonData = toolsReadFile(path.join(path.resolve(), 'auth.json'))
+        jsonData = toolsReadFile(jsonPath)
         Object.keys(data).forEach(k => {
           if (data[k]) jsonData[k] = data[k]
         })
       } else {
         jsonData = data
       }
+  
+      console.log(jsonData)
       
       fs.writeFile(jsonPath, JSON.stringify(jsonData), 'utf8', err => {
         if (err) console.log(err)
@@ -102,12 +104,12 @@ routerApi.post('/accessToken', async (req, res) => {
 })
 
 routerApi.get('/logout', async (req, res) => {
-  const jsonPath = path.join(__dirname, '../auth.json')
+  const jsonPath = path.join(path.resolve(), 'auth.json')
   // 是否存在json文件
   const exist = isExist(jsonPath)
   let jsonData
   if (exist) {
-    jsonData = toolsReadFile(path.join(path.resolve(), 'auth.json'))
+    jsonData = toolsReadFile(jsonPath)
     delete jsonData['access_token']
   }
   
@@ -208,40 +210,6 @@ routerApi.get('/proxy', async (req, res) => {
     res.send(await fileManagerPost(req))
   }
 })
-
-// 封装https发送get请求
-// function get(req) {
-//   return new Promise(resolve => {
-//     const {
-//       url,
-//       params,
-//       headers = {
-//         'User-Agent': 'pan.baidu.com'
-//       }
-//     } = req.query
-//
-//     // 拼接url， 将参数加到url后
-//     const getUrl = url + (params !== undefined ? '?' + querystring.stringify(JSON.parse(params)) : '')
-//     https.get(decodeURIComponent(getUrl), {headers}, response => {
-//       response.setEncoding('utf-8')
-//       let str = ''
-//       response.on('data', data => str += data)
-//       response.on('end', () => {
-//         let result
-//         try {
-//           result = typeof str === 'object' ? JSON.parse(str) : str
-//         } catch (e) {
-//           console.log(e)
-//           result = {
-//             error: true,
-//             data: str
-//           }
-//         }
-//         resolve(result)
-//       })
-//     })
-//   })
-// }
 
 // 文件操作专属方法
 function fileManagerPost(req) {
