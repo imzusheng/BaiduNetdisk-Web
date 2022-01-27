@@ -10,11 +10,14 @@
   <el-container :id="'HomeOverview'" :style="{filter: store.state.dialogVisible ? 'blur(10px)' : 'none'}">
 
     <el-header :class="'home-header'">
+      <!--   菜单开关 s   -->
       <div>
-        <!--   开关 s   -->
         <div class="drawer-switch user-select-not" @click="menuShow = !menuShow"
              v-if="$router.currentRoute.value.name !== 'FilePlayer'">
-          <Menu style="height: 32px; width: 32px;" :style="{color: menuShow ? '#f2f2f2': '#ccc'}"/>
+          <Menu
+              style="height: 32px; width: 32px;"
+              :style="{color: menuShow ? 'rgba(50,50,50,1)': 'rgba(100,100,100,1)'}"
+          />
         </div>
         <!--  头像信息 s -->
         <div class="home-header-avatar">
@@ -47,7 +50,7 @@
         <el-input
             v-model="searchInput"
             placeholder="搜索网盘文件"
-            class="input-with-select"
+            class="input-with-select user-select-not"
             clearable
         >
           <template #prepend>
@@ -353,6 +356,16 @@ const logout = () => {
       justify-content: center;
       align-items: center;
 
+      // 下拉选择框
+      .el-input-group__prepend {
+        background: rgba(60, 60, 60, 1);
+
+        div, span, input {
+          color: rgba(200, 200, 200, 1);
+        }
+      }
+
+      // 搜索按钮
       .el-input-group__append {
         background: rgba(64, 158, 255, 1);
 
@@ -365,6 +378,7 @@ const logout = () => {
         }
       }
 
+      // 中间搜索框
       > .el-input {
         border-radius: 4px;
         overflow: hidden;
@@ -376,6 +390,7 @@ const logout = () => {
 
         .el-input__inner {
           background: rgba(240, 240, 240, .2);
+          color: rgba(200, 200, 200, 1);
         }
       }
     }

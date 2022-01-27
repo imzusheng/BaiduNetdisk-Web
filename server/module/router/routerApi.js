@@ -184,7 +184,6 @@ routerApi.get('/proxy', async (req, res) => {
   }
   
   if (method === 'get') {
-    // res.send(await get(req))
     axios.get(
         url,
         {
