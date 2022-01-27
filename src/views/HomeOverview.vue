@@ -10,7 +10,7 @@
     <div class="home-main-tools">
       <!--  功能按钮 s  -->
       <div class="home-main-btn">
-        <el-button-group style="margin-right: 12px" v-if="!$router.currentRoute.value.query?.category">
+        <el-button-group style="margin-right: 12px; display: none" v-if="!$router.currentRoute.value.query?.category">
           <el-button type="primary" :icon="Share" round @click="upload"><b>上传</b></el-button>
           <el-button type="primary" :icon="Share" plain round @click="mkdir"><b>新建文件夹</b></el-button>
         </el-button-group>
@@ -23,6 +23,11 @@
                      :disabled="rowSelection.length === 0"><b>删除</b>
           </el-button>
         </el-button-group>
+        <!--  切换显示模式按钮 s  -->
+        <div class="displayModeBtn" title="切换显示模式" @click="displayModeBtn = !displayModeBtn">
+          <list v-if="!displayModeBtn"/>
+          <grid v-else/>
+        </div>
       </div>
       <!--   面包屑 s     -->
       <el-breadcrumb separator="/" :class="'home-main-breadcrumb'" :id="'homeBreadcrumb'">
@@ -34,8 +39,9 @@
       </el-breadcrumb>
     </div>
 
-    <!-- 文件列表 s -->
+    <!-- 文件列表 列表模式 s -->
     <el-table
+        v-if="displayModeBtn"
         :data="tableData"
         :class="'home-main-table'"
         ref="multipleTableRef"
@@ -92,6 +98,30 @@
       </el-table-column>
     </el-table>
 
+    <!-- 文件夹列表 图标模式 s  -->
+    <div class="home-main-list" v-else>
+      <ul v-if="tableData.length > 0">
+        <li
+            class="list-item"
+            :title="listItem.server_filename"
+            v-for="(listItem, listIndex) in tableData"
+            :key="'list' + listIndex"
+            @click="iconClick(listItem)">
+          <img v-if="listItem.isdir === 1"
+               src="http://cdn.zusheng.club/icon/文件夹.svg"
+               alt="icon">
+          <img v-else-if="listItem.server_filename"
+               :src="iconPath(util.getFileIcon(listItem.server_filename))"
+               alt="icon">
+          <div class="list-item-name">{{ listItem.server_filename }}</div>
+        </li>
+      </ul>
+      <div v-else
+           style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #999">
+        空目录
+      </div>
+    </div>
+
   </el-main>
 </template>
 
@@ -101,7 +131,7 @@ import {useStore} from 'vuex'
 import {api, util} from '@/util'
 import {useRouter} from 'vue-router'
 import {computed, onMounted, reactive, ref, toRaw} from 'vue'
-import {Share, Download, Delete} from '@element-plus/icons-vue'
+import {Share, Download, Delete, Grid, List} from '@element-plus/icons-vue'
 import {ElLoading, ElMessage, ElMessageBox} from 'element-plus'
 
 const store = useStore()
@@ -130,6 +160,8 @@ const breadcrumb = computed(() => {
 })
 // 多选数据
 const rowSelection = reactive([])
+// 切换显示模式
+const displayModeBtn = ref(true)
 
 // 多选回调
 const handleSelectionChange = e => {
@@ -320,6 +352,30 @@ const cellClick = (rowProxy, column, cell, event) => {
   }
 }
 
+// 图标模式下点击
+const iconClick = (rowProxy) => {
+  const row = toRaw(rowProxy)
+  if (row.isdir === 1) { // 是文件夹
+    clearData()
+    store.state.fileListLoading = true
+    router.push({
+      query: {path: encodeURIComponent(row.path)}
+    })
+  } else if (row.category.toString() === '1') {
+    let routeData = router.resolve({
+      path: '/player',
+      query: {
+        videoName: row.server_filename,
+        videoPoster: encodeURIComponent(row.thumbs.url3),
+        videoPath: encodeURIComponent(row.path)
+      }
+    })
+    window.open(routeData.href, '_blank')
+  } else { // 点击是文件
+    doDownloadOne(rowProxy)
+  }
+}
+
 // 更新面包屑
 const updateBreadcrumb = index => {
   // 返回上级目录
@@ -438,9 +494,26 @@ onMounted(() => {
       .home-main-tools {
         width: 100%;
 
-        // 功能按钮
-        .el-button-group {
+        .home-main-btn {
           margin-bottom: 10px;
+          display: flex;
+          justify-content: space-between;
+
+          // 功能按钮
+          .el-button-group {
+          }
+
+          // 排序方式按钮
+          .displayModeBtn {
+            cursor: pointer;
+
+            > svg {
+              height: 32px;
+              width: 32px;
+              color: rgba(120, 120, 120, 1);
+            }
+          }
+
         }
 
         // 面包屑
@@ -546,6 +619,49 @@ onMounted(() => {
               display: flex;
               justify-content: center;
               align-items: center;
+            }
+          }
+        }
+      }
+
+      // 无序列表
+      .home-main-list {
+        flex: 1;
+
+        ul {
+          width: 100%;
+          display: grid;
+          grid-template-columns: repeat(10, 10%);
+          grid-row-gap: 12px;
+
+          > li {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+
+            &:hover {
+              background: rgba(200, 200, 200, .2);
+            }
+
+            img {
+              height: 50px;
+              width: 50px;
+            }
+
+            .list-item-name {
+              width: 100%;
+              text-align: center;
+              margin-top: 8px;
+              font-size: 12px;
+              color: rgba(100, 100, 100, 1);
+              display: block;
+              white-space: nowrap;
+              text-overflow: ellipsis;
+              overflow: hidden;
             }
           }
         }

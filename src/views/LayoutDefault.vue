@@ -67,7 +67,6 @@
     </el-header>
 
     <el-container>
-
       <el-drawer
           v-if="$router.currentRoute.value.name !== 'FilePlayer'"
           direction="ltr"
@@ -78,7 +77,7 @@
           :lock-scroll="false"
           :show-close="false"
           :z-index="3"
-          :size="'300px'"
+          :size="'250px'"
           v-model="menuShow"
           :with-header="false">
         <!--  菜单 s -->
@@ -203,9 +202,12 @@ const searchSelect = ref('当前目录')
 
 // 菜单选择
 const menuSelect = index => {
-  router.replace({
-    path: `/${index}`
-  })
+  const nextPath = `/${index}`
+  if (router.currentRoute.value.path !== nextPath) {
+    router.replace({
+      path: nextPath
+    })
+  }
 }
 
 // 搜索文件
@@ -420,8 +422,8 @@ const logout = () => {
   // 内容
   .el-container {
     .menu-perch {
-      width: 300px;
-      min-width: 300px
+      width: 250px;
+      min-width: 250px
     }
   }
 
