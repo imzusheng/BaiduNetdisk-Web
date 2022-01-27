@@ -123,7 +123,7 @@
         </el-menu>
         <!--  配额 s  -->
         <div class="home-aside-quota">
-          <el-progress :text-inside="true" :stroke-width="26" :percentage="parseInt(quotaInfo.rate) || 0"/>
+          <el-progress :text-inside="true" :stroke-width="18" :percentage="parseInt(quotaInfo.rate) || 0"/>
           <span>{{ quotaInfo.used }}/{{ quotaInfo.total }}</span>
         </div>
       </el-drawer>
@@ -275,6 +275,16 @@ const logout = () => {
       .home-aside-quota {
         margin: 20px;
 
+        .el-progress-bar__inner {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+
+          span {
+            font-size: 13px;
+          }
+        }
+
         > span {
           font-size: 13px;
           text-align: right;
@@ -315,10 +325,6 @@ const logout = () => {
 
     // 开关
     .drawer-switch {
-      height: 40px;
-      width: 40px;
-      min-width: 40px;
-      min-height: 40px;
       cursor: pointer;
       margin-right: 30px;
       display: flex;
